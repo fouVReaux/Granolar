@@ -37,7 +37,6 @@ $(VENV_NAME)/bin/activate: setup.py
 	test -d $(VENV_NAME) || virtualenv -p python3 $(VENV_NAME)
 	${PYTHON} -m pip install -U pip
 	${PYTHON} -m pip install -e .
-	${PYTHON} -m pip install -U torch
 	touch $(VENV_NAME)/bin/activate
 
 
@@ -49,7 +48,7 @@ lint: venv
 	${PYTHON} -m mypy
 
 run: venv
-	${PYTHON} vae_pytorch.py
+	${PYTHON} "MNIST_Handwritten_Digit_Recognition/main.py"
 
 doc: venv
 	$(VENV_ACTIVATE) && cd docs; make html
