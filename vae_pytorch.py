@@ -7,7 +7,7 @@ import os
 import torch
 import torch.utils.data
 from torch import nn, optim
-from torch.nn import functional as F
+from torch.nn import functional
 from torchvision import datasets, transforms
 from torchvision.utils import save_image
 
@@ -65,7 +65,7 @@ class VAE(nn.Module):
         self.fc4 = nn.Linear(400, 784)
 
     def encode(self, x):
-        h1 = F.relu(self.fc1(x))
+        h1 = functional.relu(self.fc1(x))
         return self.fc21(h1), self.fc22(h1)
 
     def reparameterize(self, mu, logvar):
@@ -74,7 +74,7 @@ class VAE(nn.Module):
         return mu + beta*eps*std
 
     def decode(self, z):
-        h3 = F.relu(self.fc3(z))
+        h3 = functional.relu(self.fc3(z))
         return torch.sigmoid(self.fc4(h3))
 
     def forward(self, x):
@@ -92,7 +92,7 @@ optimizer = optim.Adam(model.parameters(), lr=1e-3)
 
 # Reconstruction + KL divergence losses summed over all elements and batch
 def loss_function(recon_x, x, mu, logvar):
-    BCE = F.binary_cross_entropy(recon_x, x.view(-1, 784), reduction='sum')
+    BCE = functional.binary_cross_entropy(recon_x, x.view(-1, 784), reduction='sum')
     KLD = -0.5 * torch.sum(1 + logvar - mu.pow(2) - logvar.exp())
     return BCE + KLD
 
