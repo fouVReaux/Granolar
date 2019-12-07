@@ -54,6 +54,7 @@ test_loader = torch.utils.data.DataLoader(
 
 beta = 0.5
 
+
 class VAE(nn.Module):
     def __init__(self):
         super(VAE, self).__init__()
@@ -154,3 +155,4 @@ if __name__ == "__main__":
             sample = model.decode(sample).cpu()
             save_image(sample.view(64, 1, 28, 28),
                        'results/sample_' + str(epoch) + '.png')
+
