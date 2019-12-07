@@ -1,128 +1,156 @@
-import torch
-import torch.nn.functional as nn
-import torch.autograd as autograd
-import torch.optim as optim
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
 
-import numpy as np
-import matplotlib.pyplot as plt
-import matplotlib.gridspec as gridspec
+from __future__ import print_function
+import argparse
 import os
-
-import input_data
-
-
-mnist = input_data.read_data_sets('MNIST', one_hot=True)
-batch_size = 64
-X_dim = mnist.train.images.shape[1]
-h_dim = 128
-Z_dim = 100
-Y_dim = X_dim
-c = 0
-lr = 1e-3
+import torch
+import torch.utils.data
+from torch import nn, optim
+from torch.nn import functional as F
+from torchvision import datasets, transforms
+from torchvision.utils import save_image
 
 
-def init_weights(size):
-    # default implementation :
-    # return torch.zeros(*size, requires_grad=True)
-    # Xavier !
-    in_dim = size[0]
-    stddev = 1. / np.sqrt(in_dim / 2.)
-    W = torch.mul(torch.randn(*size), stddev)
-    W.requires_grad = True
-    return W
+# get the arguments, if not on command line, the arguments are the default
+parser = argparse.ArgumentParser(description='VAE MNIST Example')
+parser.add_argument('--batch-size', type=int, default=128, metavar='N',
+                    help='input batch size for training (default: 128)')
+parser.add_argument('--epochs', type=int, default=10, metavar='N',
+                    help='number of epochs to train (default: 10)')
+parser.add_argument('--no-cuda', action='store_true', default=False,
+                    help='enables CUDA training')
+parser.add_argument('--seed', type=int, default=1, metavar='S',
+                    help='random seed (default: 1)')
+parser.add_argument('--log-interval', type=int, default=10, metavar='N',
+                    help='how many batches to wait before logging training status')
+
+args = parser.parse_args()
+
+args.cuda = not args.no_cuda and torch.cuda.is_available()
 
 
-def init_bias(dim):
-    return torch.zeros(dim, requires_grad=True)
+torch.manual_seed(args.seed)
+
+# device is gpu if possible
+device = torch.device("cuda" if args.cuda else "cpu")
+
+kwargs = {'num_workers': 1, 'pin_memory': True} if args.cuda else {}
+
+# loading the training dataset
+train_loader = torch.utils.data.DataLoader(
+    datasets.MNIST('../data', train=True, download=True,
+                   transform=transforms.ToTensor()),
+    batch_size=args.batch_size, shuffle=True, **kwargs)
+    
+# loading the test dataset
+test_loader = torch.utils.data.DataLoader(
+    datasets.MNIST('../data', train=False, transform=transforms.ToTensor()),
+    batch_size=args.batch_size, shuffle=True, **kwargs)
 
 
-# =============================== Q(z|X) ======================================
+# definition of beta, should be 0 < beta < 1
+# (this needs to be changed though, could be + pretty if passed as arg)
 
-Wxh_Q = init_weights(size=[X_dim, h_dim])
-bh_Q = init_bias(h_dim)
+beta = 0.5
 
-Whz_mu = init_weights(size=[h_dim, Z_dim])
-bhz_mu = init_bias(Z_dim)
+class VAE(nn.Module):
+    def __init__(self):
+        super(VAE, self).__init__()
 
-Whz_logsigma = init_weights(size=[h_dim, Z_dim])
-bz_logsigma = init_bias(Z_dim)
+        self.fc1 = nn.Linear(784, 400)
+        self.fc21 = nn.Linear(400, 20)
+        self.fc22 = nn.Linear(400, 20)
+        self.fc3 = nn.Linear(20, 400)
+        self.fc4 = nn.Linear(400, 784)
 
+    def encode(self, x):
+        h1 = F.relu(self.fc1(x))
+        return self.fc21(h1), self.fc22(h1)
 
-def Q(X):
-    h = nn.relu(X @ Wxh_Q + bh_Q.repeat(X.size(0), 1))
-    z_mu = h @ Whz_mu + bhz_mu.repeat(h.size(0), 1)
-    z_logsigma = h @ Whz_logsigma + bz_logsigma.repeat(h.size(0), 1)
-    return z_mu, z_logsigma
+    def reparameterize(self, mu, logvar):
+        std = torch.exp(0.5*logvar)
+        eps = torch.randn_like(std)
+        return mu + beta*eps*std
 
+    def decode(self, z):
+        h3 = F.relu(self.fc3(z))
+        return torch.sigmoid(self.fc4(h3))
 
-def sample_z(mu, log_var):
-    eps = torch.randn(batch_size, Z_dim)
-    return mu + torch.exp(log_var / 2) * eps
-
-
-# =============================== P(X|z) ======================================
-
-Wzh_P = init_weights(size=[Z_dim, h_dim])
-bh_P = init_bias(h_dim)
-
-Why = init_weights(size=[h_dim, Y_dim])
-by = init_bias(Y_dim)
-
-
-def P(z):
-    h = nn.relu(z @ Wzh_P + bh_P.repeat(z.size(0), 1))
-    return nn.sigmoid(h @ Why + by.repeat(h.size(0), 1))
+    def forward(self, x):
+        mu, logvar = self.encode(x.view(-1, 784))
+        z = self.reparameterize(mu, logvar)
+        return self.decode(z), mu, logvar
 
 
-# =============================== TRAINING ====================================
+# send the model to device
+model = VAE().to(device)
 
-params = [Wxh_Q, bh_Q, Whz_mu, bhz_mu, Whz_logsigma, bz_logsigma,
-          Wzh_P, bh_P, Why, by]
+# set the optimizer
+optimizer = optim.Adam(model.parameters(), lr=1e-3)
 
-solver = optim.Adam(params, lr=lr)
 
-for it in range(100000):
-    X, _ = mnist.train.next_batch(batch_size)
-    X = torch.from_numpy(X)
+# Reconstruction + KL divergence losses summed over all elements and batch
+def loss_function(recon_x, x, mu, logvar):
+    BCE = F.binary_cross_entropy(recon_x, x.view(-1, 784), reduction='sum')
+    KLD = -0.5 * torch.sum(1 + logvar - mu.pow(2) - logvar.exp())
+    return BCE + KLD
 
-    # Forward
-    z_mu, z_logsigma = Q(X)
-    z = sample_z(z_mu, z_logsigma)
-    Y = P(z)
 
-    # Loss
-    recon_loss = nn.binary_cross_entropy(Y, X, size_average=False) / batch_size
-    kl_loss = torch.mean(0.5 * torch.sum(torch.exp(z_logsigma) + z_mu**2 - 1. - z_logsigma, 1))
-    loss = recon_loss + kl_loss
+def train(epoch):
+    model.train()
+    train_loss = 0
+    # for each batch
+    for batch_idx, (data, _) in enumerate(train_loader):
+        data = data.to(device)
+        optimizer.zero_grad()
+        # get the variables
+        recon_batch, mu, logvar = model(data)
+        # define the loss function
+        loss = loss_function(recon_batch, data, mu, logvar)
+        loss.backward()
+        train_loss += loss.item()
+        optimizer.step()
+        # affichage
+        if batch_idx % args.log_interval == 0:
+            print('Train Epoch: {} [{}/{} ({:.0f}%)]\tLoss: {:.6f}'.format(
+                epoch, batch_idx * len(data), len(train_loader.dataset),
+                100. * batch_idx / len(train_loader),
+                loss.item() / len(data)))
 
-    # Backward
-    loss.backward()
+    print('====> Epoch: {} Average loss: {:.4f}'.format(
+          epoch, train_loss / len(train_loader.dataset)))
 
-    # Update
-    solver.step()
-    solver.zero_grad()
 
-    # Print and plot sometimes
-    if it % 1000 == 0:
-        print('Iter-{}; Loss: {:.4}'.format(it, loss.item()))
+def test(epoch):
+    model.eval()
+    test_loss = 0
+    with torch.no_grad():
+        for i, (data, _) in enumerate(test_loader):
+            data = data.to(device)
+            recon_batch, mu, logvar = model(data)
+            test_loss += loss_function(recon_batch, data, mu, logvar).item()
+            #affichage
+            if i == 0:
+                n = min(data.size(0), 8)
+                comparison = torch.cat([data[:n],
+                                      recon_batch.view(args.batch_size, 1, 28, 28)[:n]])
+                save_image(comparison.cpu(),
+                         'results/reconstruction_' + str(epoch) + '.png', nrow=n)
 
-        samples = P(z).data.numpy()[:16]
+    test_loss /= len(test_loader.dataset)
+    print('====> Test set loss: {:.4f}'.format(test_loss))
 
-        fig = plt.figure(figsize=(4, 4))
-        gs = gridspec.GridSpec(4, 4)
-        gs.update(wspace=0.05, hspace=0.05)
 
-        for i, sample in enumerate(samples):
-            ax = plt.subplot(gs[i])
-            plt.axis('off')
-            ax.set_xticklabels([])
-            ax.set_yticklabels([])
-            ax.set_aspect('equal')
-            plt.imshow(sample.reshape(28, 28), cmap='Greys_r')
-
-        if not os.path.exists('out/'):
-            os.makedirs('out/')
-
-        plt.savefig('out/{}.png'.format(str(c).zfill(3)), bbox_inches='tight')
-        c += 1
-        plt.close(fig)
+# main code
+if __name__ == "__main__":
+    if not os.path.exists('results/'):
+        os.makedirs('results')
+    for epoch in range(1, args.epochs + 1):
+        train(epoch)
+        test(epoch)
+        with torch.no_grad():
+            sample = torch.randn(64, 20).to(device)
+            sample = model.decode(sample).cpu()
+            save_image(sample.view(64, 1, 28, 28),
+                       'results/sample_' + str(epoch) + '.png')
