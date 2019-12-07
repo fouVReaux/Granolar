@@ -1,24 +1,10 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-"""
-Created on Wed Dec  4 12:12:40 2019
-
-@author: lydia
-"""
-
-#!/usr/bin/env python2
-# -*- coding: utf-8 -*-
-"""
-Created on Sun Dec  1 18:28:52 2019
-
-@author: lydia
-"""
 
 from __future__ import print_function
 import argparse
 import torch
 import torch.utils.data
-args.cuda = not args.no_cuda and torch.cuda.is_av
 from torch import nn, optim
 from torch.nn import functional as F
 from torchvision import datasets, transforms
@@ -37,7 +23,11 @@ parser.add_argument('--seed', type=int, default=1, metavar='S',
                     help='random seed (default: 1)')
 parser.add_argument('--log-interval', type=int, default=10, metavar='N',
                     help='how many batches to wait before logging training status')
-args = parser.parse_args()ailable()
+
+args = parser.parse_args()
+
+args.cuda = not args.no_cuda and torch.cuda.is_available()
+
 
 torch.manual_seed(args.seed)
 
