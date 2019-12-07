@@ -11,7 +11,7 @@ import os
 import input_data
 
 
-mnist = input_data.read_data_sets('MNIST', one_hot=True)
+mnist = input_data.read_data_sets('../MNIST_Handwritten_Digit_Recognition/MNIST_Dataset', one_hot=True)
 batch_size = 64
 X_dim = mnist.train.images.shape[1]
 h_dim = 128
@@ -120,8 +120,8 @@ for it in range(100000):
             ax.set_aspect('equal')
             plt.imshow(sample.reshape(28, 28), cmap='Greys_r')
 
-        if not os.path.exists('out/'):
-            os.makedirs('out/')
+        if not os.path.exists('results/'):
+            os.makedirs('results/')
 
         plt.savefig('out/{}.png'.format(str(c).zfill(3)), bbox_inches='tight')
         c += 1
