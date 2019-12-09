@@ -2,7 +2,7 @@ import torch
 from torch import optim
 from torchvision.utils import save_image
 
-from vae_model import VAE_Model
+from src.vae_model import VAE_Model
 
 # Reconstruction + KL divergence losses summed over all elements and batch
 beta = 0.5
