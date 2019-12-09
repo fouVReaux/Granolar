@@ -8,7 +8,7 @@ import os
 from torchvision import datasets, transforms
 from torchvision.utils import save_image
 
-from vae import VAE
+from src.vae import VAE
 
 
 # get the arguments, if not on command line, the arguments are the default
