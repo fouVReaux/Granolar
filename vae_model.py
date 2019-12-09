@@ -4,11 +4,6 @@ import torch
 from torch import nn, optim
 from torch.nn import functional
 
-# definition of beta, should be 0 < beta < 1
-# (this needs to be changed though, could be + pretty if passed as arg)
-
-beta = 0.5
-
 
 class VAE_Model(nn.Module):
     def __init__(self):
@@ -27,7 +22,7 @@ class VAE_Model(nn.Module):
     def reparameterize(self, mu, logvar):
         std = torch.exp(0.5*logvar)
         eps = torch.randn_like(std)
-        return mu + beta*eps*std
+        return mu + eps*std
 
     def decode(self, z):
         h3 = functional.relu(self.fc3(z))
