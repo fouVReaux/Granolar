@@ -72,7 +72,7 @@ class VAE(nn.Module):
     def reparameterize(self, mu, logvar):
         std = torch.exp(0.5*logvar)
         eps = torch.randn_like(std)
-        return mu + beta*eps*std
+        return mu + eps*std
 
     def decode(self, z):
         h3 = functional.relu(self.fc3(z))
@@ -95,7 +95,7 @@ optimizer = optim.Adam(model.parameters(), lr=1e-3)
 def loss_function(recon_x, x, mu, logvar):
     BCE = functional.binary_cross_entropy(recon_x, x.view(-1, 784), reduction='sum')
     KLD = -0.5 * torch.sum(1 + logvar - mu.pow(2) - logvar.exp())
-    return BCE + KLD
+    return BCE + beta*KLD
 
 
 def train(epoch):
