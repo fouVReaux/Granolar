@@ -103,6 +103,6 @@ if __name__ == "__main__":
     db.set_database_path('../database/raw')
     db.set_slices_path('../database/slices')
     db.set_sr(22050)
-    db.set_slices_duration(0.5)
+    db.set_slices_duration(0.08)
     db.set_type('.npz')
     db.slice_database()
