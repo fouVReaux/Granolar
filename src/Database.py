@@ -1,4 +1,10 @@
+#-------------------------------------------------------------------------------
+# Titre : DataBase.py
+# Projet : Granolar
+# Description : slice the database in wav of .npz
+#-------------------------------------------------------------------------------
 import librosa
+import numpy as np
 import os
 
 class DataBase:
@@ -7,13 +13,19 @@ class DataBase:
         self.slices_path = ""
         self.database_path = ""
         self.slices_duration = 0
-
+        self.type = ""
     # Setter -------------------------------------------------------------------
     def set_sr(self, sr):
         """
         set the sampling rate of the database
         """
         self.sr = sr
+
+    def set_type(self, type):
+        """
+        """
+        self.type = type
+        return type
 
     def set_slices_path(self, slices_path):
         """
@@ -73,12 +85,13 @@ class DataBase:
             # resample our lovely data
             yrs = librosa.resample(y, sr, self.sr)
             # save data into a sweety file of duration [second]
-            librosa.output.write_wav(path+str(index)+"_"+file_name, yrs, self.sr, norm=False)
+            if (self.type == ".wav"):
+                librosa.output.write_wav(path+str(index)+"_"+file_name, yrs, self.sr, norm=False)
+            if (self.type == ".npz"):
+                np.savez_compressed(path+str(index)+"_"+file_name+'.npz',self.sr,yrs)
             index +=1
         print("\t\tNumber of slices :", index)
         return index
-
-
 
 if __name__ == "__main__":
     #---------------------------------------------------------------------------
@@ -91,4 +104,5 @@ if __name__ == "__main__":
     db.set_slices_path('../database/slices')
     db.set_sr(22050)
     db.set_slices_duration(0.5)
+    db.set_type('.npz')
     db.slice_database()
