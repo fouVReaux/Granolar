@@ -66,7 +66,7 @@ class DataBase:
 
         # get the samplig rate of the file_name
         sr = librosa.get_samplerate(self.database_path+"/"+file_name)
-        print("\t> load of the file : ",file_name)
+        print("\t> load of the file : ", file_name)
         # Set the frame parameters to be equivalent to the librosa defaults
         # in the file's native sampling rate
         frame_length = (2048 * sr) // 22050

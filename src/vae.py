@@ -8,9 +8,14 @@ from src.vae_model import VAE_Model
 beta = 0.5
 
 
+def reparameterize(self, mu, log_var):
+    std = torch.exp(0.5 * log_var)
+    eps = torch.randn_like(std)
+    return mu + eps * std
+
 def loss_function(recon_x, x, mu, logvar):
     BCE = torch.nn.functional.binary_cross_entropy(recon_x, x.view(-1, 784), reduction='sum')
-    KLD = -0.5 * torch.sum(1 + logvar - mu.pow(2) - logvar.exp())
+    KLD = -0.5 * torch.sum(1 + log_var - mu.pow(2) - log_var.exp())
     return BCE + beta * KLD
 
 
@@ -40,9 +45,9 @@ class VAE:
             data = data.to(self.device)
             self.optimizer.zero_grad()
             # get the variables
-            recon_batch, mu, logvar = self.model(data)
+            recon_batch, mu, log_var = self.model(data)
             # define the loss function
-            loss = loss_function(recon_batch, data, mu, logvar)
+            loss = loss_function(recon_batch, data, mu, log_var)
             loss.backward()
             train_loss += loss.item()
             self.optimizer.step()
@@ -62,8 +67,8 @@ class VAE:
         with torch.no_grad():
             for i, (data, _) in enumerate(self.test_loader):
                 data = data.to(self.device)
-                recon_batch, mu, logvar = self.model(data)
-                test_loss += loss_function(recon_batch, data, mu, logvar).item()
+                recon_batch, mu, log_var = self.model(data)
+                test_loss += loss_function(recon_batch, data, mu, log_var).item()
                 #affichage
                 if i == 0:
                     n = min(data.size(0), 8)
