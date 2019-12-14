@@ -1,11 +1,20 @@
-#-------------------------------------------------------------------------------
+# -------------------------------------------------------------------------------
 # Titre : DataBase.py
 # Projet : Granolar
 # Description : slice the database in wav of .npz
-#-------------------------------------------------------------------------------
+# -------------------------------------------------------------------------------
 import librosa
 import numpy as np
 import os
+
+# Audio
+SAMPLING_RATE = 22050
+SLICE_DURATION = 0.08
+AUDIO_FORMAT = "npz"
+# PATH
+DEFAULT_DATABASE_PATH = '../database/raw'
+DEFAULT_SLICES_PATH = '../database/slices'
+
 
 class DataBase:
     def __init__(self):
@@ -14,6 +23,7 @@ class DataBase:
         self.database_path = ""
         self.slices_duration = 0
         self.type = ""
+
     # Setter -------------------------------------------------------------------
     def set_sr(self, sr):
         """
@@ -62,19 +72,19 @@ class DataBase:
         """
         # create a directory for the slices
         path = os.getcwd()
-        path = self.slices_path+"/"
+        path = self.slices_path + "/"
 
         # get the samplig rate of the file_name
-        sr = librosa.get_samplerate(self.database_path+"/"+file_name)
+        sr = librosa.get_samplerate(self.database_path + "/" + file_name)
         print("\t> load of the file : ", file_name)
         # Set the frame parameters to be equivalent to the librosa defaults
         # in the file's native sampling rate
         frame_length = (2048 * sr) // 22050
         hop_length = (512 * sr) // 22050
 
-        size_slice = int(self.slices_duration*128/0.3)
+        size_slice = int(self.slices_duration * 128 / 0.3)
         # Stream the data input
-        stream = librosa.stream(self.database_path+"/"+file_name,
+        stream = librosa.stream(self.database_path + "/" + file_name,
                                 block_length=size_slice,
                                 frame_length=frame_length,
                                 hop_length=hop_length,
@@ -85,24 +95,25 @@ class DataBase:
             # resample our lovely data
             yrs = librosa.resample(y, sr, self.sr)
             # save data into a sweety file of duration [second]
-            if (self.type == ".wav"):
-                librosa.output.write_wav(path+str(index)+"_"+file_name, yrs, self.sr, norm=False)
-            if (self.type == ".npz"):
-                np.savez_compressed(path+str(index)+"_"+file_name+'.npz',self.sr,yrs)
-            index +=1
+            if self.type == "wav":
+                librosa.output.write_wav(path + str(index) + "_" + file_name, yrs, self.sr, norm=False)
+            elif self.type == "npz":
+                np.savez_compressed(path + str(index) + "_" + file_name + '.npz', self.sr, yrs)
+            index += 1
         print("\t\tNumber of slices :", index)
         return index
 
+
 if __name__ == "__main__":
-    #---------------------------------------------------------------------------
+    # ---------------------------------------------------------------------------
     # To test this code add some audio (format wav) in the raw directory
     # run python Database.py in order to slice all the wav file into subfile of
     # 5 seconds
-    #---------------------------------------------------------------------------
+    # ---------------------------------------------------------------------------
     db = DataBase()
-    db.set_database_path('../database/raw')
-    db.set_slices_path('../database/slices')
-    db.set_sr(22050)
-    db.set_slices_duration(0.08)
-    db.set_type('.npz')
+    db.set_database_path(DEFAULT_DATABASE_PATH)
+    db.set_slices_path(DEFAULT_SLICES_PATH)
+    db.set_sr(SAMPLING_RATE)
+    db.set_slices_duration(SLICE_DURATION)
+    db.set_type(AUDIO_FORMAT)
     db.slice_database()
