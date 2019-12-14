@@ -4,7 +4,9 @@ import torch
 from torch import nn, optim
 from torch.nn import functional
 
+
 SIZE_IO = 512
+
 
 class VAE_Model(nn.Module):
     def __init__(self):
@@ -21,7 +23,7 @@ class VAE_Model(nn.Module):
             nn.ReLU(),
             torch.nn.BatchNorm1d(100),
             nn.Conv1d(100, 20, kernel_size=13, stride=4),
-            nn.ReLU()).cuda()
+            nn.ReLU())
         self.fc1 = nn.Linear(20, 1000)
         self.fc2 = nn.Linear(1000, 10)
 
