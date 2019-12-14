@@ -39,8 +39,8 @@ test_dataset = datasets.MNIST('../data', train=False, transform=transforms.ToTen
 
 # main code
 if __name__ == "__main__":
-    if not os.path.exists('results/'):
-        os.makedirs('results')
+    if not os.path.exists('../results/'):
+        os.makedirs('../results')
     vae = VAE(train_dataset, test_dataset, batch_size=args.batch_size, seed=args.seed, no_cuda=args.no_cuda)
     for epoch in range(args.epochs):
         vae.train()
