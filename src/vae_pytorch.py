@@ -4,12 +4,13 @@
 from __future__ import print_function
 import argparse
 import os
+import torch
 
 from torchvision import datasets, transforms
 from torchvision.utils import save_image
 
 from src.vae import VAE
-
+from src.Database import DataBase
 
 # get the arguments, if not on command line, the arguments are the default
 parser = argparse.ArgumentParser(description='VAE MNIST Example')
@@ -26,15 +27,12 @@ parser.add_argument('--log-interval', type=int, default=10, metavar='N',
 
 args = parser.parse_args()
 
-
-
-
-
 # loading the training dataset
-train_dataset = datasets.MNIST('../data', train=True, download=True, transform=transforms.ToTensor())
-    
+#train_dataset = datasets.MNIST('../data', train=True, download=True, transform=transforms.ToTensor())
+train_dataset = DataBase(transform=torch.tensor)
+
 # loading the test dataset
-test_dataset = datasets.MNIST('../data', train=False, transform=transforms.ToTensor())
+test_dataset = DataBase(transform=torch.tensor)
 
 
 # main code
@@ -46,5 +44,4 @@ if __name__ == "__main__":
         vae.train()
         vae.test()
         sample = vae.create_sample()
-        save_image(sample.view(64, 1, 28, 28), 'results/sample_' + str(epoch) + '.png')
 
