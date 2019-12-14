@@ -4,13 +4,14 @@ import torch
 from torch import nn, optim
 from torch.nn import functional
 
+SIZE_IO = 512
 
 class VAE_Model(nn.Module):
     def __init__(self):
         super(VAE_Model, self).__init__()
 
         self.encoder = nn.Sequential(
-            nn.Conv1d(512, 400, kernel_size=5, stride=1),
+            nn.Conv1d(SIZE_IO, 400, kernel_size=5, stride=1),
             nn.ReLU(),
             torch.nn.BatchNorm1d(400),
             nn.Conv1d(400, 200, kernel_size=8, stride=2),
@@ -27,7 +28,7 @@ class VAE_Model(nn.Module):
         self.fc3 = nn.Linear(20, 1000)
         self.fc4 = nn.Linear(1000, 10)
         self.decoder = nn.Sequential(
-            nn.ConvTranspose1d(512, 400, kernel_size=13, stride=4),
+            nn.ConvTranspose1d(SIZE_IO, 400, kernel_size=13, stride=4),
             nn.ReLU(),
             torch.nn.BatchNorm1d(400),
             nn.ConvTranspose1d(400, 200, kernel_size=10, stride=4),
@@ -51,7 +52,7 @@ class VAE_Model(nn.Module):
         return torch.sigmoid(self.fc4(h3))
 
     def forward(self, x):
-        mu, log_var = self.encode(x.view(-1, 512))
+        mu, log_var = self.encode(x.view(-1, SIZE_IO))
         z = self.reparameterize(mu, log_var)
         return self.decode(z), mu, log_var
 
