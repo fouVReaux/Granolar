@@ -1,6 +1,6 @@
 import torch
 from torch import optim
-from torchvision.utils import save_image
+import numpy as np
 
 from src.vae_model import VAE_Model
 
@@ -8,10 +8,19 @@ from src.vae_model import VAE_Model
 beta = 0.5
 
 
-def loss_function(recon_x, x, mu, logvar):
-    BCE = torch.nn.functional.binary_cross_entropy(recon_x, x.view(-1, 784), reduction='sum')
-    KLD = -0.5 * torch.sum(1 + logvar - mu.pow(2) - logvar.exp())
-    return BCE + beta * KLD
+def reparameterize(mu, log_var):
+    std = torch.exp(0.5 * log_var)
+    eps = torch.randn_like(std)
+    return mu + eps * std
+
+
+def loss_function(recon_x, x, mu, log_var):
+    # p(z | x) = - log(sigma) - 0.5 * log(2*pi) - (x - mu)^2 / 2 * sigma ^ 2
+    recon_loss = torch.sum(VAE_Model.log_var_z - 0.5*np.log(2*np.pi)
+                           + ((x.view(-1, VAE_Model.SIZE_IO) - VAE_Model.mu_z).pow(2)) / (2 * torch.exp(VAE_Model.log_var_z).pow(2)))
+    # Kullback-Leibler divergence
+    KLD = -0.5 * torch.sum(1 + log_var - mu.pow(2) - log_var.exp())
+    return recon_loss + beta * KLD
 
 
 class VAE:
@@ -36,17 +45,20 @@ class VAE:
         self.epoch += 1
         train_loss = 0
         # for each batch
-        for batch_idx, (data, _) in enumerate(self.train_loader):
+        for batch_idx, data in enumerate(self.train_loader):
+            print("ELEM_LEN:", len(data[3]))
+            print("DATA_LEN:", len(data))
+            print("DATA:", data)
             data = data.to(self.device)
             self.optimizer.zero_grad()
             # get the variables
-            recon_batch, mu, logvar = self.model(data)
+            mu_z, log_var_z , mu, log_var= self.model(data)
             # define the loss function
-            loss = loss_function(recon_batch, data, mu, logvar)
+            loss = loss_function(data, mu, log_var, mu_z, log_var_z)
             loss.backward()
             train_loss += loss.item()
             self.optimizer.step()
-            # affichage
+            # print
             if batch_idx % log_interval == 0:
                 print('Train Epoch: {} [{}/{} ({:.0f}%)]\tLoss: {:.6f}'.format(
                     self.epoch, batch_idx * len(data), len(self.train_loader.dataset),
@@ -62,15 +74,15 @@ class VAE:
         with torch.no_grad():
             for i, (data, _) in enumerate(self.test_loader):
                 data = data.to(self.device)
-                recon_batch, mu, logvar = self.model(data)
-                test_loss += loss_function(recon_batch, data, mu, logvar).item()
-                #affichage
-                if i == 0:
-                    n = min(data.size(0), 8)
-                    comparison = torch.cat([data[:n],
-                                          recon_batch.view(self.batch_size, 1, 28, 28)[:n]])
-                    save_image(comparison.cpu(),
-                             'results/reconstruction_' + str(self.epoch) + '.png', nrow=n)
+                mu_z, log_var_z, mu, log_var = self.model(data)
+                test_loss += loss_function(data, mu_z, log_var_z, mu, log_var, beta).item()
+                # affichage
+                # if i == 0:
+                #     n = min(data.size(0), 8)
+                #     comparison = torch.cat([data[:n],
+                #                           recon_batch.view(self.batch_size, 1, 28, 28)[:n]])
+                #     save_image(comparison.cpu(),
+                #              'results/reconstruction_' + str(self.epoch) + '.png', nrow=n)
 
         test_loss /= len(self.test_loader.dataset)
         print('====> Test set loss: {:.4f}'.format(test_loss))
