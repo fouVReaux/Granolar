@@ -10,8 +10,8 @@ import os
 # Audio
 from torch.utils.data import Dataset
 
-SAMPLING_RATE = 22050
-SLICE_DURATION = 0.08
+SAMPLING_RATE = 11025
+SLICE_DURATION = 0.01
 AUDIO_FORMAT = "npz"
 # PATH
 DEFAULT_DATABASE_PATH = '../database/raw'
@@ -114,6 +114,7 @@ class DataBase(Dataset):
             index += 1
             slices.append(yrs)
         print("\t\tNumber of slices :", index)
+        print('Size of slices:', len(yrs))
         return slices
 
 
@@ -123,4 +124,4 @@ if __name__ == "__main__":
     # run python Database.py in order to slice all the wav file into subfile of
     # 5 seconds
     # ---------------------------------------------------------------------------
-    db = DataBase(save_slices=True)
+    db = DataBase(save_slices=False)
