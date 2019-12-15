@@ -1,6 +1,6 @@
 import torch
 from torch import optim
-from torchvision.utils import save_image
+import numpy as np
 
 from src.vae_model import VAE_Model
 
@@ -15,9 +15,12 @@ def reparameterize(mu, log_var):
 
 
 def loss_function(recon_x, x, mu, log_var):
-    BCE = torch.nn.functional.binary_cross_entropy(recon_x, x.view(-1, 784), reduction='sum')
+    # p(z | x) = - log(sigma) - 0.5 * log(2*pi) - (x - mu)^2 / 2 * sigma ^ 2
+    recon_loss = torch.sum(VAE_Model.log_var_z - 0.5*np.log(2*np.pi)
+                           + ((x.view(-1, VAE_Model.SIZE_IO) - VAE_Model.mu_z).pow(2)) / (2 * torch.exp(VAE_Model.log_var_z).pow(2)))
+    # Kullback-Leibler divergence
     KLD = -0.5 * torch.sum(1 + log_var - mu.pow(2) - log_var.exp())
-    return BCE + beta * KLD
+    return recon_loss + beta * KLD
 
 
 class VAE:
@@ -49,9 +52,9 @@ class VAE:
             data = data.to(self.device)
             self.optimizer.zero_grad()
             # get the variables
-            recon_batch, mu, log_var = self.model(data)
+            mu_z, log_var_z , mu, log_var= self.model(data)
             # define the loss function
-            loss = loss_function(recon_batch, data, mu, log_var)
+            loss = loss_function(data, mu, log_var, mu_z, log_var_z)
             loss.backward()
             train_loss += loss.item()
             self.optimizer.step()
@@ -71,8 +74,8 @@ class VAE:
         with torch.no_grad():
             for i, (data, _) in enumerate(self.test_loader):
                 data = data.to(self.device)
-                recon_batch, mu, log_var = self.model(data)
-                test_loss += loss_function(recon_batch, data, mu, log_var).item()
+                mu_z, log_var_z, mu, log_var = self.model(data)
+                test_loss += loss_function(data, mu_z, log_var_z, mu, log_var, beta).item()
                 # affichage
                 # if i == 0:
                 #     n = min(data.size(0), 8)
