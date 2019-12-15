@@ -12,6 +12,7 @@ class VAE_Model(nn.Module):
     def __init__(self):
         super(VAE_Model, self).__init__()
 
+        # encoder layers
         self.encoder = nn.Sequential(
             nn.Conv1d(SIZE_IO, 400, kernel_size=5, stride=1),
             nn.ReLU(),
@@ -24,11 +25,14 @@ class VAE_Model(nn.Module):
             torch.nn.BatchNorm1d(100),
             nn.Conv1d(100, 20, kernel_size=13, stride=4),
             nn.ReLU())
+        # gaussian encoder
         self.fc1 = nn.Linear(20, 1000)
         self.fc2 = nn.Linear(1000, 10)
 
+        # gaussian decoder
         self.fc3 = nn.Linear(10, 1000)
         self.fc4 = nn.Linear(1000, 20)
+        # gaussian decoder layers
         self.decoder = nn.Sequential(
             nn.ConvTranspose1d(20, 100, kernel_size=13, stride=4),
             nn.ReLU(),
@@ -58,5 +62,6 @@ class VAE_Model(nn.Module):
     def forward(self, x):
         mu, log_var = self.encode(x.view(-1, SIZE_IO))
         z = self.reparameterize(mu, log_var)
-        return self.decode(z), mu, log_var
+        mu_z, log_var_z = self.decode(z)
+        return mu_z, log_var_z, mu, log_var
 
