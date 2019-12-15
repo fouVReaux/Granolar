@@ -45,6 +45,7 @@ class VAE_Model(nn.Module):
         print(self.encoder)
         print('size_encoder:', len(self.encoder))
         print(self.decoder)
+        print('size_decoder:', len(self.decoder))
 
     def encode(self, signal):
         x = self.encoder(signal)
