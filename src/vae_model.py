@@ -5,7 +5,7 @@ from torch import nn, optim
 from torch.nn import functional
 
 
-SIZE_IO = 512
+SIZE_IO = 832
 
 
 class VAE_Model(nn.Module):
@@ -39,10 +39,11 @@ class VAE_Model(nn.Module):
             nn.ConvTranspose1d(200, 400, kernel_size=8, stride=2),
             nn.ReLU(),
             torch.nn.BatchNorm1d(400),
-            nn.ConvTranspose1d(400, self.SIZE_IO, kernel_size=5, stride=1),
+            nn.ConvTranspose1d(400, SIZE_IO, kernel_size=5, stride=1),
             nn.ReLU())
 
         print(self.encoder)
+        print('size_encoder:', len(self.encoder))
         print(self.decoder)
 
     def encode(self, signal):
@@ -54,7 +55,7 @@ class VAE_Model(nn.Module):
         return torch.sigmoid(self.fc4(h3))
 
     def forward(self, x):
-        mu, log_var = self.encode(x.view(-1, self.SIZE_IO))
+        mu, log_var = self.encode(x.view(-1, SIZE_IO))
         z = self.reparameterize(mu, log_var)
         return self.decode(z), mu, log_var
 
