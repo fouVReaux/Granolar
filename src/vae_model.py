@@ -27,19 +27,19 @@ class VAE_Model(nn.Module):
         self.fc1 = nn.Linear(20, 1000)
         self.fc2 = nn.Linear(1000, 10)
 
-        self.fc3 = nn.Linear(20, 1000)
-        self.fc4 = nn.Linear(1000, 10)
+        self.fc3 = nn.Linear(10, 1000)
+        self.fc4 = nn.Linear(1000, 20)
         self.decoder = nn.Sequential(
-            nn.ConvTranspose1d(SIZE_IO, 400, kernel_size=13, stride=4),
-            nn.ReLU(),
-            torch.nn.BatchNorm1d(400),
-            nn.ConvTranspose1d(400, 200, kernel_size=10, stride=4),
-            nn.ReLU(),
-            torch.nn.BatchNorm1d(200),
-            nn.ConvTranspose1d(200, 100, kernel_size=8, stride=2),
+            nn.ConvTranspose1d(20, 100, kernel_size=13, stride=4),
             nn.ReLU(),
             torch.nn.BatchNorm1d(100),
-            nn.ConvTranspose1d(100, 20, kernel_size=5, stride=1),
+            nn.ConvTranspose1d(100, 200, kernel_size=10, stride=4),
+            nn.ReLU(),
+            torch.nn.BatchNorm1d(200),
+            nn.ConvTranspose1d(200, 400, kernel_size=8, stride=2),
+            nn.ReLU(),
+            torch.nn.BatchNorm1d(400),
+            nn.ConvTranspose1d(400, self.SIZE_IO, kernel_size=5, stride=1),
             nn.ReLU())
 
         print(self.encoder)
@@ -54,7 +54,7 @@ class VAE_Model(nn.Module):
         return torch.sigmoid(self.fc4(h3))
 
     def forward(self, x):
-        mu, log_var = self.encode(x.view(-1, SIZE_IO))
+        mu, log_var = self.encode(x.view(-1, self.SIZE_IO))
         z = self.reparameterize(mu, log_var)
         return self.decode(z), mu, log_var
 
