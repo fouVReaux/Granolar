@@ -14,15 +14,6 @@ def reparameterize(mu, log_var):
     return mu + eps * std
 
 
-def loss_function(recon_x, x, mu, log_var):
-    # p(z | x) = - log(sigma) - 0.5 * log(2*pi) - (x - mu)^2 / 2 * sigma ^ 2
-    recon_loss = torch.sum(VAE_Model.log_var_z - 0.5*np.log(2*np.pi)
-                           + ((x.view(-1, VAE_Model.SIZE_IO) - VAE_Model.mu_z).pow(2)) / (2 * torch.exp(VAE_Model.log_var_z).pow(2)))
-    # Kullback-Leibler divergence
-    KLD = -0.5 * torch.sum(1 + log_var - mu.pow(2) - log_var.exp())
-    return recon_loss + beta * KLD
-
-
 def loss_function(x, mu, log_var):
     # p(z | x) = - log(sigma) - 0.5 * log(2*pi) - (x - mu)^2 / 2 * sigma ^ 2
     recon_loss = torch.sum(VAE_Model.log_var_z - 0.5*np.log(2*np.pi)
@@ -61,7 +52,7 @@ class VAE:
             data = data.to(self.device)
             self.optimizer.zero_grad()
             # get the variables
-            mu_z, log_var_z , mu, log_var= self.model(data)
+            mu_z, log_var_z, mu, log_var = self.model(data)
             # define the loss function
             loss = loss_function(data, mu, log_var, mu_z, log_var_z)
             loss.backward()
