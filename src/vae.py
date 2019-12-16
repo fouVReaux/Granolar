@@ -5,13 +5,22 @@ from torchvision.utils import save_image
 from src.vae_model import VAE_Model
 
 # Reconstruction + KL divergence losses summed over all elements and batch
-beta = 0.5
+beta = 0  # value for train testing
 
 
 def loss_function(recon_x, x, mu, logvar):
     BCE = torch.nn.functional.binary_cross_entropy(recon_x, x.view(-1, 784), reduction='sum')
     KLD = -0.5 * torch.sum(1 + logvar - mu.pow(2) - logvar.exp())
     return BCE + beta * KLD
+
+
+def loss_function(x, mu, log_var):
+    # p(z | x) = - log(sigma) - 0.5 * log(2*pi) - (x - mu)^2 / 2 * sigma ^ 2
+    recon_loss = torch.sum(VAE_Model.log_var_z - 0.5*np.log(2*np.pi)
+                           + ((x.view(-1, VAE_Model.SIZE_IO) - VAE_Model.mu_z).pow(2)) / (2 * torch.exp(VAE_Model.log_var_z).pow(2)))
+    # Kullback-Leibler divergence
+    KLD = -0.5 * torch.sum(1 + log_var - mu.pow(2) - log_var.exp())
+    return recon_loss + beta * KLD
 
 
 class VAE:

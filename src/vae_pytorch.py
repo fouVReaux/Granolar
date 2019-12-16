@@ -31,10 +31,13 @@ args = parser.parse_args()
 
 
 # loading the training dataset
-train_dataset = datasets.MNIST('../data', train=True, download=True, transform=transforms.ToTensor())
-    
+#train_dataset = datasets.MNIST('../data', train=True, download=True, transform=transforms.ToTensor())
+#train_dataset = DataBase(transform=torch.tensor)
+train_dataset = torch.zeros(16, 832)
+
 # loading the test dataset
-test_dataset = datasets.MNIST('../data', train=False, transform=transforms.ToTensor())
+#test_dataset = DataBase(transform=torch.tensor)
+test_dataset = torch.zeros(16, 832)
 
 
 # main code
