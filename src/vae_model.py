@@ -48,10 +48,10 @@ class VAE_Model(nn.Module):
             nn.ConvTranspose1d(400, SIZE_IO, kernel_size=5, stride=1),
             nn.ReLU())
 
-    def reparameterize(self, mu, logvar):
-        std = torch.exp(0.5*logvar)
-        eps = torch.randn_like(std)
-        return mu + eps*std
+        print(self.encoder)
+        print('size_encoder:', len(self.encoder))
+        print(self.decoder)
+        print('size_decoder:', len(self.decoder))
 
     def encode(self, signal):
         x = self.encoder(signal)
@@ -75,3 +75,4 @@ class VAE_Model(nn.Module):
         mu, log_var = self.encode(x.view(-1, SIZE_IO))
         z = self.reparameterize(mu, log_var)
         return self.decode(z), mu, log_var
+

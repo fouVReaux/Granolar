@@ -4,12 +4,10 @@
 from __future__ import print_function
 import argparse
 import os
-
-from torchvision import datasets, transforms
-from torchvision.utils import save_image
+import torch
 
 from src.vae import VAE
-
+from src.Database import DataBase
 
 # get the arguments, if not on command line, the arguments are the default
 parser = argparse.ArgumentParser(description='VAE MNIST Example')
@@ -26,28 +24,22 @@ parser.add_argument('--log-interval', type=int, default=10, metavar='N',
 
 args = parser.parse_args()
 
-
-
-
-
 # loading the training dataset
 #train_dataset = datasets.MNIST('../data', train=True, download=True, transform=transforms.ToTensor())
 #train_dataset = DataBase(transform=torch.tensor)
-train_dataset = torch.zeros(16, 832)
+train_dataset = torch.zeros(16, 1, 832)
 
 # loading the test dataset
 #test_dataset = DataBase(transform=torch.tensor)
-test_dataset = torch.zeros(16, 832)
-
+test_dataset = torch.zeros(16, 1, 832)
 
 # main code
 if __name__ == "__main__":
-    if not os.path.exists('results/'):
-        os.makedirs('results')
+    if not os.path.exists('../results/'):
+        os.makedirs('../results')
     vae = VAE(train_dataset, test_dataset, batch_size=args.batch_size, seed=args.seed, no_cuda=args.no_cuda)
     for epoch in range(args.epochs):
         vae.train()
         vae.test()
         sample = vae.create_sample()
-        save_image(sample.view(64, 1, 28, 28), 'results/sample_' + str(epoch) + '.png')
 
