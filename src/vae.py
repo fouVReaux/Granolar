@@ -1,3 +1,9 @@
+# -------------------------------------------------------------------------------
+# Titre : vae.py
+# Projet : Granolar
+# Description : train, test and reconstruct the database
+# -------------------------------------------------------------------------------
+
 import torch
 from torch import optim
 import numpy as np

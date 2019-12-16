@@ -1,3 +1,9 @@
+# -------------------------------------------------------------------------------
+# Titre : vae_pytorch.py
+# Projet : Granolar
+# Description : get the arguments, load the dataset and compile the main code
+# -------------------------------------------------------------------------------
+
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
