@@ -2,6 +2,23 @@
 data
 results/
 
+# Max SDK
+sysbuild
+*.sdf
+*.suo
+*.sln
+*.opensdf
+log.txt
+externals
+support
+build
+*.o
+*.dylib
+
+*.xcworkspace
+xcuserdata
+.DS_Store
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
@@ -29,6 +46,9 @@ wheels/
 *.egg
 MANIFEST
 .buildconfig
+
+#Visual studio
+.vs
 
 
 # PyInstaller
