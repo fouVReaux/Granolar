@@ -49,6 +49,7 @@ MANIFEST
 
 #Visual studio
 .vs
+*.user
 
 
 # PyInstaller
