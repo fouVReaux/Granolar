@@ -62,7 +62,7 @@ class VAE_Model(nn.Module):
     def encode(self, signal):
         x = self.encoder(signal)
         x = x.view(-1, BATCH_SIZE * SIZE_IO * 1)
-		fc1_x = self.fc1(x)
+        fc1_x = self.fc1(x)
         mu_z = functional.relu(self.fc2(fc1_x))
         log_var_z = functional.relu(self.fc2(fc1_x))
         return mu_z, log_var_z
@@ -70,7 +70,7 @@ class VAE_Model(nn.Module):
     def decode(self, z):
         x = functional.relu(self.fc3(z))
         x = functional.relu(self.fc4(x))
-		decoded_x = self.decoder(x)
+        decoded_x = self.decoder(x)
         mu_x = functional.relu(decoded_x)
         mu_x = torch.tanh(self.fc4(mu_x))
         log_x = functional.relu(decoded_x)
