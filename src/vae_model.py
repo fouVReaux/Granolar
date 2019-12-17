@@ -31,7 +31,7 @@ class VAE_Model(nn.Module):
             torch.nn.BatchNorm1d(100),
             nn.ReLU(),
             nn.Conv1d(100, 20, kernel_size=13, stride=4),
-            torch.nn.BatchNorm1d(100),
+            torch.nn.BatchNorm1d(20),
             nn.ReLU())
         # gaussian encoder
         self.fc1 = nn.Linear(20, 1000)
