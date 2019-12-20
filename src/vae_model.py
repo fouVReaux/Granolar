@@ -20,38 +20,40 @@ class VAE_Model(nn.Module):
         super(VAE_Model, self).__init__()
 
         # encoder layers
+
+        # channels = 1, 64, 32, 16 encoder = [conv(channels[i-1], channels [i] ...) for i in range(len(channels))]
         self.encoder = nn.Sequential(
-            nn.Conv1d(SIZE_IO, 400, kernel_size=5, stride=1),
-            torch.nn.BatchNorm1d(400),
+            nn.Conv1d(1, 64, kernel_size=5, stride=1, padding=3),
+            torch.nn.BatchNorm1d(64),
             nn.ReLU(),
-            nn.Conv1d(400, 200, kernel_size=8, stride=2),
-            torch.nn.BatchNorm1d(200),
+            nn.Conv1d(64, 32, kernel_size=8, stride=2, padding=5),
+            torch.nn.BatchNorm1d(32),
             nn.ReLU(),
-            nn.Conv1d(200, 100, kernel_size=10, stride=4),
-            torch.nn.BatchNorm1d(100),
+            nn.Conv1d(32, 16, kernel_size=10, stride=4, padding=5),
+            torch.nn.BatchNorm1d(16),
             nn.ReLU(),
-            nn.Conv1d(100, 20, kernel_size=13, stride=4),
-            torch.nn.BatchNorm1d(20),
+            nn.Conv1d(16, 8, kernel_size=13, stride=4, padding=7),
+            torch.nn.BatchNorm1d(8),
             nn.ReLU())
         # gaussian encoder
-        self.fc1 = nn.Linear(20, 1000)
-        self.fc2 = nn.Linear(1000, 10)
+        self.fc1 = nn.Linear(128, 27)
+        self.fc2 = nn.Linear(128, 27)
 
         # gaussian decoder
-        self.fc3 = nn.Linear(10, 1000)
-        self.fc4 = nn.Linear(1000, 20)
+        self.fc3 = nn.Linear(27, 128)
+        self.fc4 = nn.Linear(27, 128)
         # gaussian decoder layers
         self.decoder = nn.Sequential(
-            nn.ConvTranspose1d(20, 100, kernel_size=13, stride=4),
+            nn.ConvTranspose1d(128, 100, kernel_size=13, stride=4, padding=7),
             torch.nn.BatchNorm1d(100),
             nn.ReLU(),
-            nn.ConvTranspose1d(100, 200, kernel_size=10, stride=4),
-            torch.nn.BatchNorm1d(200),
+            nn.ConvTranspose1d(100, 50, kernel_size=10, stride=4),
+            torch.nn.BatchNorm1d(50),
             nn.ReLU(),
-            nn.ConvTranspose1d(200, 400, kernel_size=8, stride=2),
-            torch.nn.BatchNorm1d(400),
+            nn.ConvTranspose1d(50, 20, kernel_size=8, stride=2),
+            torch.nn.BatchNorm1d(20),
             nn.ReLU(),
-            nn.ConvTranspose1d(400, SIZE_IO, kernel_size=5, stride=1),
+            nn.ConvTranspose1d(20, 1, kernel_size=5, stride=1),
             nn.ReLU())
 
         print(self.encoder)
@@ -77,8 +79,14 @@ class VAE_Model(nn.Module):
         log_x = torch.tanh(self.fc4(log_x))
         return mu_x.view(-1, SIZE_IO), log_x.view(-1, SIZE_IO)
 
+    def reparameterize(self, mu, log_var):
+        std = torch.exp(0.5 * log_var)
+        eps = torch.randn_like(std)
+        return mu + eps * std
+
     def forward(self, x):
-        mu, log_var = self.encode(x.view(-1, SIZE_IO))
+        mu, log_var = self.encode(x)
+        print('size mu:', mu.size(), 'size log_var:', log_var.size())
         z = self.reparameterize(mu, log_var)
         return self.decode(z), mu, log_var
 

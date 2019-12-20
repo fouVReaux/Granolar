@@ -14,12 +14,6 @@ from src.vae_model import VAE_Model
 beta = 0  # value for train testing
 
 
-def reparameterize(mu, log_var):
-    std = torch.exp(0.5 * log_var)
-    eps = torch.randn_like(std)
-    return mu + eps * std
-
-
 def loss_function(x, mu, log_var):
     # p(z | x) = - log(sigma) - 0.5 * log(2*pi) - (x - mu)^2 / 2 * sigma ^ 2
     recon_loss = torch.sum(VAE_Model.log_var_z - 0.5*np.log(2*np.pi)
@@ -55,6 +49,7 @@ class VAE:
             print("ELEM_LEN:", len(data[3]))
             print("DATA_LEN:", len(data))
             print("DATA:", data)
+            print('size DATA', data.size())
             data = data.to(self.device)
             self.optimizer.zero_grad()
             # get the variables
