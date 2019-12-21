@@ -8,7 +8,11 @@ import torch
 from torch import optim
 import numpy as np
 
+
 from src.vae_model import VAE_Model
+
+GRAIN_SIZE = 512
+CHANNEL = 1
 
 # Reconstruction + KL divergence losses summed over all elements and batch
 beta = 0  # value for train testing
@@ -16,23 +20,32 @@ beta = 0  # value for train testing
 
 def loss_function(x, mu, log_var):
     # p(z | x) = - log(sigma) - 0.5 * log(2*pi) - (x - mu)^2 / 2 * sigma ^ 2
-    recon_loss = torch.sum(VAE_Model.log_var_z - 0.5*np.log(2*np.pi)
-                           + ((x.view(-1, VAE_Model.SIZE_IO) - VAE_Model.mu_z).pow(2)) / (2 * torch.exp(VAE_Model.log_var_z).pow(2)))
+    recon_loss = torch.sum(log_var - 0.5*np.log(2*np.pi)
+                           + ((x.view(-1, GRAIN_SIZE) - mu).pow(2)) / (2 * torch.exp(log_var).pow(2)))
     # Kullback-Leibler divergence
     KLD = -0.5 * torch.sum(1 + log_var - mu.pow(2) - log_var.exp())
     return recon_loss + beta * KLD
 
 
+# def forward_and_computeLoss(x, target):
+#     x_recon, mu, log_var, z = encode(x)
+#     loss_recon, loss_kl = loss_function(mu, log_var, x_recon, target)
+#     loss = loss_recon + loss_kl
+#     return loss, loss_recon, loss_kl
+
+
 class VAE:
     # device is gpu if possible
     def __init__(self, train_dataset, test_dataset, batch_size=128, seed=1, no_cuda=False):
+        # TODO: get GRAIN_SIZE and CHANNEL from train and/or test_dataset
+        channel = 1
         cuda = not no_cuda and torch.cuda.is_available()
         torch.manual_seed(seed)
         self.kwargs = {'num_workers': 1, 'pin_memory': True} if cuda else {}
         # device is gpu if possible
         self.device = torch.device("cuda" if cuda else "cpu")
         # send the model to device
-        self.model = VAE_Model().to(self.device)
+        self.model = VAE_Model(batch_size, channel, GRAIN_SIZE).to(self.device)
         # set the optimizer
         self.optimizer = optim.Adam(self.model.parameters(), lr=1e-3)
         self.batch_size = batch_size
@@ -53,9 +66,8 @@ class VAE:
             data = data.to(self.device)
             self.optimizer.zero_grad()
             # get the variables
-            mu_z, log_var_z, mu, log_var = self.model(data)
-            # define the loss function
-            loss = loss_function(data, mu, log_var, mu_z, log_var_z)
+            recon_batch, mu, logvar = self.model(data)
+            loss = loss_function(data, mu, logvar)
             loss.backward()
             train_loss += loss.item()
             self.optimizer.step()
