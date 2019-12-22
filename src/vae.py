@@ -19,19 +19,13 @@ beta = 0  # value for train testing
 
 
 def loss_function(x, mu, log_var):
+    # TODO: fix dimensionality problems of the loss function
     # p(z | x) = - log(sigma) - 0.5 * log(2*pi) - (x - mu)^2 / 2 * sigma ^ 2
     recon_loss = torch.sum(log_var - 0.5*np.log(2*np.pi)
                            + ((x.view(-1, GRAIN_SIZE) - mu).pow(2)) / (2 * torch.exp(log_var).pow(2)))
     # Kullback-Leibler divergence
     KLD = -0.5 * torch.sum(1 + log_var - mu.pow(2) - log_var.exp())
     return recon_loss + beta * KLD
-
-
-# def forward_and_computeLoss(x, target):
-#     x_recon, mu, log_var, z = encode(x)
-#     loss_recon, loss_kl = loss_function(mu, log_var, x_recon, target)
-#     loss = loss_recon + loss_kl
-#     return loss, loss_recon, loss_kl
 
 
 class VAE:
