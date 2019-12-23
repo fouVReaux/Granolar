@@ -89,7 +89,6 @@ class VAE_Model(nn.Module):
     def encode(self, signal):
         x = self.encoder(signal)
         x = x.view(-1, self.BATCH_SIZE * self.CHANNEL * 1)
-
         fc1_x = functional.relu(self.fc1(x))
         return self.fc21(fc1_x), self.fc22(fc1_x)
 
@@ -97,16 +96,19 @@ class VAE_Model(nn.Module):
         x = functional.relu(self.fc3(z))
         x = functional.relu(self.fc4(x))
         decoded_x = self.decoder(x.unsqueeze(1))
-        return decoded_x
+        mu_recon, log_var_recon = self.reparameterize(self.decode(z))
+        print('size mu_recon:', mu_recon.size, 'size log_recon', log_var_recon.size)
+        return decoded_x, mu_recon, log_var_recon
 
-    def reparameterize(self, mu, log_var):
-        std = torch.exp(0.5 * log_var)
+    def reparameterize(self, mu_z, log_var_z):
+        std = torch.exp(0.5 * log_var_z)
         eps = torch.randn_like(std)
-        return mu + eps * std
+        z = mu_z + eps * std
+        return z
 
     def forward(self, x):
-        mu, log_var = self.encode(x)
-        print('size mu:', mu.size(), 'size log_var:', log_var.size())
-        z = self.reparameterize(mu, log_var)
-        return self.decode(z), mu, log_var
+        mu_z, log_var_z = self.encode(x)
+        print('size mu:', mu_z.size(), 'size log_var:', log_var_z.size())
+        z = self.reparameterize(mu_z, log_var_z)
+        return self.decode(z), mu_z, log_var_z
 

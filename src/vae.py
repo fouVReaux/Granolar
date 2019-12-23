@@ -18,13 +18,12 @@ CHANNEL = 1
 beta = 0  # value for train testing
 
 
-def loss_function(x, mu, log_var):
-    # TODO: fix dimensionality problems of the loss function
+def loss_function(x, mu_z, log_var_z, mu_recon, log_var_recon):
     # p(z | x) = - log(sigma) - 0.5 * log(2*pi) - (x - mu)^2 / 2 * sigma ^ 2
-    recon_loss = torch.sum(log_var - 0.5*np.log(2*np.pi)
-                           + ((x.view(-1, GRAIN_SIZE) - mu).pow(2)) / (2 * torch.exp(log_var).pow(2)))
+    recon_loss = torch.sum(log_var_recon - 0.5*np.log(2*np.pi)
+                           + ((x.view(-1, GRAIN_SIZE) - mu_recon).pow(2)) / (2 * torch.exp(log_var_recon).pow(2)))
     # Kullback-Leibler divergence
-    KLD = -0.5 * torch.sum(1 + log_var - mu.pow(2) - log_var.exp())
+    KLD = -0.5 * torch.sum(1 + log_var_z - mu_z.pow(2) - log_var_z.exp())
     return recon_loss + beta * KLD
 
 
@@ -60,8 +59,8 @@ class VAE:
             data = data.to(self.device)
             self.optimizer.zero_grad()
             # get the variables
-            recon_batch, mu, logvar = self.model(data)
-            loss = loss_function(data, mu, logvar)
+            recon_batch, mu_z, log_var_z, mu_recon, log_var_recon = self.model(data)
+            loss = loss_function(data, mu_z, log_var_z, mu_recon, log_var_recon)
             loss.backward()
             train_loss += loss.item()
             self.optimizer.step()
@@ -81,8 +80,8 @@ class VAE:
         with torch.no_grad():
             for i, (data, _) in enumerate(self.test_loader):
                 data = data.to(self.device)
-                mu_z, log_var_z, mu, log_var = self.model(data)
-                test_loss += loss_function(data, mu_z, log_var_z, mu, log_var, beta).item()
+                mu_z, log_var_z, mu_recon, log_var_recon = self.model(data)
+                test_loss += loss_function(data, mu_z, log_var_z, mu_recon, log_var_recon, beta).item()
                 # affichage
                 # if i == 0:
                 #     n = min(data.size(0), 8)
