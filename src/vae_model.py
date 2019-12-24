@@ -96,9 +96,9 @@ class VAE_Model(nn.Module):
         x = functional.relu(self.fc3(z))
         x = functional.relu(self.fc4(x))
         decoded_x = self.decoder(x.unsqueeze(1))
-        mu_recon, log_var_recon = self.reparameterize(self.decode(z))
-        print('size mu_recon:', mu_recon.size, 'size log_recon', log_var_recon.size)
-        return decoded_x, mu_recon, log_var_recon
+        mu, log_var = self.decoder(x)
+        print('size mu_recon:', mu.size, 'size log_var_recon', log_var.size)
+        return decoded_x, mu, log_var
 
     def reparameterize(self, mu_z, log_var_z):
         std = torch.exp(0.5 * log_var_z)
@@ -110,5 +110,5 @@ class VAE_Model(nn.Module):
         mu_z, log_var_z = self.encode(x)
         print('size mu:', mu_z.size(), 'size log_var:', log_var_z.size())
         z = self.reparameterize(mu_z, log_var_z)
-        return self.decode(z), mu_z, log_var_z
-
+        mu_recon, log_var_recon = self.decode(z.view(1, -1))
+        return mu_z, log_var_z, mu_recon, log_var_recon
