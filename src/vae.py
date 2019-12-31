@@ -85,27 +85,32 @@ class VAE:
             self.epoch, train_loss / len(self.train_loader.dataset)))
         return train_loss
 
-    def test(self):
+    def test(self, log_interval=10):
         self.model.eval()
+        self.epoch += 1
         test_loss = 0
         comparison = None
         with torch.no_grad():
             # for i, (data, _) in enumerate(self.test_loader):
             for batch_idx, data in enumerate(self.test_loader):
                 data = data.to(self.device)
+                self.optimizer.zero_grad()
+                # get the variables
                 data_recon, mu_z, log_var_z, mu_recon, log_var_recon = self.model(data)
                 # mu_z, log_var_z, mu_recon, log_var_recon = self.model(data)
                 # test_loss += loss_function(data, mu_z, log_var_z, mu_recon, log_var_recon, beta)
-                # affichage
-                # if i == 0:
-                #     n = min(data.size(0), 8)
-                #     comparison = torch.cat([data[:n],
-                #                           recon_batch.view(self.batch_size, 1, 28, 28)[:n]])
-                #     save_image(comparison.cpu(),
-                #              'results/reconstruction_' + str(self.epoch) + '.png', nrow=n)
-
+                loss = loss_function_2(data_recon, data, mu_z, log_var_z)
+                test_loss += loss.item()
+                self.optimizer.step()
+                # print
+                if batch_idx % log_interval == 0:
+                    print('Test Epoch: {} [{}/{} ({:.0f}%)]\tLoss test: {:.6f}'.format(
+                        self.epoch, batch_idx * len(data), len(self.test_loader.dataset),
+                                    100. * batch_idx / len(self.test_loader),
+                                    loss.item() / len(data)))
         test_loss /= len(self.test_loader.dataset)
-        print('====> Test set loss: {:.4f}'.format(test_loss))
+        print('====> Test set loss: {:.4f}'.format(
+            self.epoch, test_loss / len(self.test_loader.dataset)))
         return test_loss
 
     def create_sample(self):
