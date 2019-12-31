@@ -8,7 +8,6 @@ import torch
 from torch import optim
 import numpy as np
 
-
 from src.vae_model import VAE_Model
 
 GRAIN_SIZE = 512
@@ -18,9 +17,19 @@ CHANNEL = 1
 beta = 0  # value for train testing
 
 
+def loss_function_2(recon_x, x, mu_z, log_var_z):
+    # BCE = torch.nn.functional.binary_cross_entropy(recon_x, x.view(16, 1, -1), reduction='sum')
+    # see Appendix B from VAE paper:
+    # Kingma and Welling. Auto-Encoding Variational Bayes. ICLR, 2014
+    # https://arxiv.org/abs/1312.6114
+    # 0.5 * sum(1 + log(sigma^2) - mu^2 - sigma^2)
+    KLD = -0.5 * torch.sum(1 + log_var_z - mu_z.pow(2) - log_var_z.exp())
+    return KLD
+
+
 def loss_function(x, mu_z, log_var_z, mu_recon, log_var_recon):
     # p(z | x) = - log(sigma) - 0.5 * log(2*pi) - (x - mu)^2 / 2 * sigma ^ 2
-    recon_loss = torch.sum(log_var_recon - 0.5*np.log(2*np.pi)
+    recon_loss = torch.sum(log_var_recon - 0.5 * np.log(2 * np.pi)
                            + ((x.view(-1, GRAIN_SIZE) - mu_recon).pow(2)) / (2 * torch.exp(log_var_recon).pow(2)))
     # Kullback-Leibler divergence
     KLD = -0.5 * torch.sum(1 + log_var_z - mu_z.pow(2) - log_var_z.exp())
@@ -43,7 +52,8 @@ class VAE:
         self.optimizer = optim.Adam(self.model.parameters(), lr=1e-3)
         self.batch_size = batch_size
         self.epoch = 0
-        self.train_loader = torch.utils.data.DataLoader(train_dataset, batch_size=batch_size, shuffle=True, **self.kwargs)
+        self.train_loader = torch.utils.data.DataLoader(train_dataset, batch_size=batch_size, shuffle=True,
+                                                        **self.kwargs)
         self.test_loader = torch.utils.data.DataLoader(test_dataset, batch_size=batch_size, shuffle=True, **self.kwargs)
 
     def train(self, log_interval=10):
@@ -59,8 +69,9 @@ class VAE:
             data = data.to(self.device)
             self.optimizer.zero_grad()
             # get the variables
-            recon_batch, mu_z, log_var_z, mu_recon, log_var_recon = self.model(data)
-            loss = loss_function(data, mu_z, log_var_z, mu_recon, log_var_recon)
+            data_recon, mu_z, log_var_z, mu_recon, log_var_recon = self.model(data)
+            # loss = loss_function(data, mu_z, log_var_z, mu_recon, log_var_recon)
+            loss = loss_function_2(data_recon, data, mu_z, log_var_z)
             loss.backward()
             train_loss += loss.item()
             self.optimizer.step()
@@ -68,20 +79,23 @@ class VAE:
             if batch_idx % log_interval == 0:
                 print('Train Epoch: {} [{}/{} ({:.0f}%)]\tLoss: {:.6f}'.format(
                     self.epoch, batch_idx * len(data), len(self.train_loader.dataset),
-                    100. * batch_idx / len(self.train_loader),
-                    loss.item() / len(data)))
+                                100. * batch_idx / len(self.train_loader),
+                                loss.item() / len(data)))
         print('====> Epoch: {} Average loss: {:.4f}'.format(
-              self.epoch, train_loss / len(self.train_loader.dataset)))
+            self.epoch, train_loss / len(self.train_loader.dataset)))
+        return train_loss
 
     def test(self):
         self.model.eval()
         test_loss = 0
         comparison = None
         with torch.no_grad():
-            for i, (data, _) in enumerate(self.test_loader):
+            # for i, (data, _) in enumerate(self.test_loader):
+            for batch_idx, data in enumerate(self.test_loader):
                 data = data.to(self.device)
-                mu_z, log_var_z, mu_recon, log_var_recon = self.model(data)
-                test_loss += loss_function(data, mu_z, log_var_z, mu_recon, log_var_recon, beta).item()
+                data_recon, mu_z, log_var_z, mu_recon, log_var_recon = self.model(data)
+                # mu_z, log_var_z, mu_recon, log_var_recon = self.model(data)
+                # test_loss += loss_function(data, mu_z, log_var_z, mu_recon, log_var_recon, beta)
                 # affichage
                 # if i == 0:
                 #     n = min(data.size(0), 8)
@@ -96,7 +110,7 @@ class VAE:
 
     def create_sample(self):
         with torch.no_grad():
-            sample = torch.randn(64, 20).to(self.device)
-            sample = self.model.decode(sample).cpu()
+            latent_sample = torch.randn(self.model.batch_size, self.model.latent_size).to(self.device)
+            sample = self.model.decode(latent_sample)
             return sample
 

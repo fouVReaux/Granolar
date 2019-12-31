@@ -15,9 +15,9 @@ import math
 class VAE_Model(nn.Module):
     def __init__(self, batch_size, channel, grain_size):
         super(VAE_Model, self).__init__()
-        self.BATCH_SIZE = batch_size
-        self.CHANNEL = channel
-        self.GRAIN_SIZE = grain_size
+        self.batch_size = batch_size
+        self.channel = channel
+        self.grain_size = grain_size
         # encode layers
         channels = [1, 64, 32, 16, 1]
         kernel_sizes = [5, 8, 10, 13]
@@ -45,14 +45,14 @@ class VAE_Model(nn.Module):
         #     torch.nn.BatchNorm1d(8),
         #     nn.ReLU())
         # gaussian encoder
-        self.fc1 = nn.Linear(batch_size, l_out)
+        self.latent_size = l_out
+        self.encoder_fc = nn.Linear(batch_size, l_out)
         # Always have same dimensions
-        self.fc21 = nn.Linear(l_out, l_out)
-        self.fc22 = nn.Linear(l_out, l_out)
+        self.enc_mu = nn.Linear(l_out, l_out)
+        self.enc_log_var = nn.Linear(l_out, l_out)
 
         # gaussian decoder
-        self.fc3 = nn.Linear(l_out, batch_size)
-        self.fc4 = nn.Linear(batch_size, batch_size)
+        self.decoder_fc = nn.Linear(l_out, batch_size)
         # gaussian decoder layers
         channels = channels[::-1]
         kernel_sizes = kernel_sizes[::-1]
@@ -66,7 +66,9 @@ class VAE_Model(nn.Module):
             self.decoder.add_module("dec_relu_" + str(i), nn.ReLU())
             l_out = (l_out - 1) * stride - 2 * padding + kernel
             print('l decode', l_out)
-
+        self.decoder.add_module("dec_tanh", nn.Tanh())
+        self.dec_mu = nn.Linear(batch_size, batch_size)
+        self.dec_log_var = nn.Linear(batch_size, batch_size)
         # gaussian decoder layers
         # self.decoder = nn.Sequential(
         #     nn.ConvTranspose1d(1, 128, kernel_size=13, stride=4, padding=7),
@@ -86,19 +88,22 @@ class VAE_Model(nn.Module):
         print(self.decoder)
         print('size_decoder:', len(self.decoder))
 
-    def encode(self, signal):
-        x = self.encoder(signal)
-        x = x.view(-1, self.BATCH_SIZE * self.CHANNEL * 1)
-        fc1_x = functional.relu(self.fc1(x))
-        return self.fc21(fc1_x), self.fc22(fc1_x)
+    def encode(self, data):
+        x = self.encoder(data)
+        x = x.view(-1, self.batch_size * self.channel * 1)
+        fc_x = functional.relu(self.encoder_fc(x))
+        return self.enc_mu(fc_x), self.enc_log_var(fc_x)
 
     def decode(self, z):
-        x = functional.relu(self.fc3(z))
-        x = functional.relu(self.fc4(x))
-        decoded_x = self.decoder(x.unsqueeze(1))
-        mu, log_var = self.decoder(x)
-        print('size mu_recon:', mu.size, 'size log_var_recon', log_var.size)
-        return decoded_x, mu, log_var
+        fc_z = self.decoder_fc(z)
+        x = functional.relu(fc_z)
+        data_recon = self.decoder(x.unsqueeze(1))
+        mu_recon = None
+        log_var_recon = None
+        # mu_recon = self.dec_mu(data_recon)
+        # log_var_recon = self.dec_log_var(data_recon)
+        # print('size mu_recon:', mu_recon.size, 'size log_var_recon', log_var_recon.size)
+        return data_recon, mu_recon, log_var_recon
 
     def reparameterize(self, mu_z, log_var_z):
         std = torch.exp(0.5 * log_var_z)
@@ -106,9 +111,9 @@ class VAE_Model(nn.Module):
         z = mu_z + eps * std
         return z
 
-    def forward(self, x):
-        mu_z, log_var_z = self.encode(x)
+    def forward(self, data):
+        mu_z, log_var_z = self.encode(data)
         print('size mu:', mu_z.size(), 'size log_var:', log_var_z.size())
         z = self.reparameterize(mu_z, log_var_z)
-        mu_recon, log_var_recon = self.decode(z.view(1, -1))
-        return mu_z, log_var_z, mu_recon, log_var_recon
+        data_recon, mu_recon, log_var_recon = self.decode(z)
+        return data_recon, mu_z, log_var_z, mu_recon, log_var_recon
