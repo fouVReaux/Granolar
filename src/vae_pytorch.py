@@ -11,6 +11,7 @@ from __future__ import print_function
 import argparse
 import os
 import torch
+import matplotlib.pyplot as plt
 
 from src.vae import VAE
 from src.Database import DataBase
@@ -44,8 +45,12 @@ if __name__ == "__main__":
     if not os.path.exists('../results/'):
         os.makedirs('../results')
     vae = VAE(train_dataset, test_dataset, batch_size=args.batch_size, seed=args.seed, no_cuda=args.no_cuda)
+    losses = []
     for epoch in range(args.epochs):
-        vae.train()
-        vae.test()
+        loss = vae.train()
+        losses.append(loss)
+        test_loss = vae.test()
         sample = vae.create_sample()
+    plt.plot(losses)
+    plt.show()
 
