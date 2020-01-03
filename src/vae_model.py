@@ -22,10 +22,11 @@ class VAE_Model(nn.Module):
         channels = [1, 64, 32, 16, 1]
         kernel_sizes = [5, 8, 10, 13]
         strides = [1, 2, 4, 4]
+        paddings = [3, 4, 5, 7]
         self.encoder = nn.Sequential()
         l_out = grain_size
-        for i, (c_in, c_out, kernel, stride) in enumerate(zip(channels[:-1], channels[1:], kernel_sizes, strides)):
-            padding = math.ceil(kernel/2)
+        for i, (c_in, c_out, kernel, stride, padding) in enumerate(zip(channels[:-1], channels[1:], kernel_sizes, strides, paddings)):
+            # padding = math.ceil(kernel/2)
             self.encoder.add_module("enc_conv_"+str(i), nn.Conv1d(c_in, c_out, kernel_size=kernel, stride=stride, padding=padding))
             self.encoder.add_module("enc_norm_"+str(i), nn.BatchNorm1d(c_out))
             self.encoder.add_module("enc_relu_"+str(i), nn.ReLU())
@@ -57,9 +58,10 @@ class VAE_Model(nn.Module):
         channels = channels[::-1]
         kernel_sizes = kernel_sizes[::-1]
         strides = strides[::-1]
+        paddings = [6, 5, 4, 1]
         self.decoder = nn.Sequential()
-        for i, (c_in, c_out, kernel, stride) in enumerate(zip(channels[:-1], channels[1:], kernel_sizes, strides)):
-            padding = math.ceil(kernel / 2)
+        for i, (c_in, c_out, kernel, stride, padding) in enumerate(zip(channels[:-1], channels[1:], kernel_sizes, strides, paddings)):
+            # padding = math.ceil(kernel / 2)
             self.decoder.add_module("dec_conv_" + str(i),
                                     nn.ConvTranspose1d(c_in, c_out, kernel_size=kernel, stride=stride, padding=padding))
             self.decoder.add_module("dec_norm_" + str(i), nn.BatchNorm1d(c_out))
@@ -98,9 +100,9 @@ class VAE_Model(nn.Module):
         fc_z = self.decoder_fc(z)
         x = functional.relu(fc_z)
         data_recon = self.decoder(x.unsqueeze(1))
-        mu_recon = None
-        log_var_recon = None
-        # mu_recon = self.dec_mu(data_recon)
+        mu_recon = self.dec_mu(data_recon)
+        log_var_recon = self.dec_log_var(data_recon)
+        print('size mu_recon:', mu_recon.size, 'size log_var_recon', log_var_recon.size)
         # log_var_recon = self.dec_log_var(data_recon)
         # print('size mu_recon:', mu_recon.size, 'size log_var_recon', log_var_recon.size)
         return data_recon, mu_recon, log_var_recon
@@ -115,5 +117,5 @@ class VAE_Model(nn.Module):
         mu_z, log_var_z = self.encode(data)
         print('size mu:', mu_z.size(), 'size log_var:', log_var_z.size())
         z = self.reparameterize(mu_z, log_var_z)
-        data_recon, mu_recon, log_var_recon = self.decode(z)
+        data_recon, mu_recon, log_var_recon = self.decode(z.view(289, 1))
         return data_recon, mu_z, log_var_z, mu_recon, log_var_recon
