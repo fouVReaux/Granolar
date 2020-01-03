@@ -14,6 +14,7 @@ import torch
 import matplotlib.pyplot as plt
 
 from src.vae import VAE
+# from src.loader import dataset
 from src.Database import DataBase
 
 # get the arguments, if not on command line, the arguments are the default
@@ -32,13 +33,18 @@ parser.add_argument('--log-interval', type=int, default=10, metavar='N',
 args = parser.parse_args()
 
 # loading the training dataset
-#train_dataset = datasets.MNIST('../data', train=True, download=True, transform=transforms.ToTensor())
-#train_dataset = DataBase(transform=torch.tensor)
+# train_dataset = datasets.MNIST('../data', train=True, download=True, transform=transforms.ToTensor())
+# train_dataset = DataBase(transform=torch.tensor)
 train_dataset = torch.zeros(args.batch_size, 1, 512)
+# train_loader = torch.utils.data.DataLoader(dataset, batch_size=batch_size,
+#                                            sampler=train_sampler, drop_last=True, num_workers=3 )  # pin_memory=True)
+
 
 # loading the test dataset
-#test_dataset = DataBase(transform=torch.tensor)
+# test_dataset = DataBase(transform=torch.tensor)
 test_dataset = torch.zeros(args.batch_size, 1, 512)
+# test_loader = torch.utils.data.DataLoader(dataset, batch_size=batch_size,
+#                                           sampler=test_sampler, drop_last=True, num_workers=3)  # pin_memory=True)
 
 # main code
 if __name__ == "__main__":
