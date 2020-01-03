@@ -32,19 +32,6 @@ class VAE_Model(nn.Module):
             self.encoder.add_module("enc_relu_"+str(i), nn.ReLU())
             l_out = (l_out + 2 * padding - (kernel - 1) - 1) // stride + 1
             print('l_encode', l_out)
-        # self.encoder = nn.Sequential(
-        #     nn.Conv1d(1, 64, kernel_size=5, stride=1, padding=3),
-        #     torch.nn.BatchNorm1d(64),
-        #     nn.ReLU(),
-        #     nn.Conv1d(64, 32, kernel_size=8, stride=2, padding=5),
-        #     torch.nn.BatchNorm1d(32),
-        #     nn.ReLU(),
-        #     nn.Conv1d(32, 16, kernel_size=10, stride=4, padding=5),
-        #     torch.nn.BatchNorm1d(16),
-        #     nn.ReLU(),
-        #     nn.Conv1d(16, 8, kernel_size=13, stride=4, padding=7),
-        #     torch.nn.BatchNorm1d(8),
-        #     nn.ReLU())
         # gaussian encoder
         self.latent_size = l_out
         self.encoder_fc = nn.Linear(batch_size, l_out)
@@ -71,19 +58,6 @@ class VAE_Model(nn.Module):
         self.decoder.add_module("dec_tanh", nn.Tanh())
         self.dec_mu = nn.Linear(batch_size, batch_size)
         self.dec_log_var = nn.Linear(batch_size, batch_size)
-        # gaussian decoder layers
-        # self.decoder = nn.Sequential(
-        #     nn.ConvTranspose1d(1, 128, kernel_size=13, stride=4, padding=7),
-        #     torch.nn.BatchNorm1d(128),
-        #     nn.ReLU(),
-        #     nn.ConvTranspose1d(128, 50, kernel_size=10, stride=4),
-        #     torch.nn.BatchNorm1d(50),
-        #     nn.ReLU(),
-        #     nn.ConvTranspose1d(50, 20, kernel_size=8, stride=2),
-        #     torch.nn.BatchNorm1d(20),
-        #     nn.ReLU(),
-        #     nn.ConvTranspose1d(20, 1, kernel_size=5, stride=1),
-        #     nn.ReLU())
 
         print(self.encoder)
         print('size_encoder:', len(self.encoder))
@@ -103,8 +77,6 @@ class VAE_Model(nn.Module):
         mu_recon = self.dec_mu(data_recon)
         log_var_recon = self.dec_log_var(data_recon)
         print('size mu_recon:', mu_recon.size, 'size log_var_recon', log_var_recon.size)
-        # log_var_recon = self.dec_log_var(data_recon)
-        # print('size mu_recon:', mu_recon.size, 'size log_var_recon', log_var_recon.size)
         return data_recon, mu_recon, log_var_recon
 
     def reparameterize(self, mu_z, log_var_z):

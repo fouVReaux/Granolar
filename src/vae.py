@@ -70,8 +70,8 @@ class VAE:
             self.optimizer.zero_grad()
             # get the variables
             data_recon, mu_z, log_var_z, mu_recon, log_var_recon = self.model(data)
-            # loss = loss_function(data, mu_z, log_var_z, mu_recon, log_var_recon)
-            loss = loss_function_2(data_recon, data, mu_z, log_var_z)
+            loss = loss_function(data, mu_z, log_var_z, mu_recon, log_var_recon)
+            # loss = loss_function_2(data_recon, data, mu_z, log_var_z)
             loss.backward()
             train_loss += loss.item()
             self.optimizer.step()
@@ -98,8 +98,8 @@ class VAE:
                 # get the variables
                 data_recon, mu_z, log_var_z, mu_recon, log_var_recon = self.model(data)
                 # mu_z, log_var_z, mu_recon, log_var_recon = self.model(data)
-                # test_loss += loss_function(data, mu_z, log_var_z, mu_recon, log_var_recon, beta)
-                loss = loss_function_2(data_recon, data, mu_z, log_var_z)
+                test_loss += loss_function(data, mu_z, log_var_z, mu_recon, log_var_recon, beta)
+                # loss = loss_function_2(data_recon, data, mu_z, log_var_z)
                 test_loss += loss.item()
                 self.optimizer.step()
                 # print
