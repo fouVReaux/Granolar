@@ -98,16 +98,16 @@ class VAE:
                 # get the variables
                 data_recon, mu_z, log_var_z, mu_recon, log_var_recon = self.model(data)
                 # mu_z, log_var_z, mu_recon, log_var_recon = self.model(data)
-                test_loss += loss_function(data, mu_z, log_var_z, mu_recon, log_var_recon, beta)
+                test_loss += loss_function(data_recon, mu_z, log_var_z, mu_recon, log_var_recon)
                 # loss = loss_function_2(data_recon, data, mu_z, log_var_z)
-                test_loss += loss.item()
+                test_loss += test_loss.item()
                 self.optimizer.step()
                 # print
                 if batch_idx % log_interval == 0:
                     print('Test Epoch: {} [{}/{} ({:.0f}%)]\tLoss test: {:.6f}'.format(
                         self.epoch, batch_idx * len(data), len(self.test_loader.dataset),
                                     100. * batch_idx / len(self.test_loader),
-                                    loss.item() / len(data)))
+                                    test_loss.item() / len(data)))
         test_loss /= len(self.test_loader.dataset)
         print('====> Test set loss: {:.4f}'.format(
             self.epoch, test_loss / len(self.test_loader.dataset)))
