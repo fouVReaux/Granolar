@@ -61,7 +61,6 @@ class VAE:
         for batch_idx, data in enumerate(self.train_loader):
             print("DATA_LEN:", len(data))
             print("DATA:", data)
-            # TODO :=> understand why data is a list with only one elem
             data = data.to(self.device)
             self.optimizer.zero_grad()
             # get the variables
