@@ -12,7 +12,7 @@ from src.vae_model import VAE_Model
 
 GRAIN_SIZE = 512
 CHANNEL = 1
-
+LEARNING_RATE = 1e-3
 # Reconstruction + KL divergence losses summed over all elements and batch
 beta = 0  # value for train testing
 
@@ -38,23 +38,20 @@ def loss_function(x, mu_z, log_var_z, mu_recon, log_var_recon):
 
 class VAE:
     # device is gpu if possible
-    def __init__(self, train_dataset, test_dataset, batch_size=128, seed=1, no_cuda=False):
+    def __init__(self, train_loader, test_loader, batch_size=128, seed=1, cuda=False):
         # TODO: get GRAIN_SIZE and CHANNEL from train and/or test_dataset
         channel = 1
-        cuda = not no_cuda and torch.cuda.is_available()
         torch.manual_seed(seed)
-        self.kwargs = {'num_workers': 1, 'pin_memory': True} if cuda else {}
         # device is gpu if possible
         self.device = torch.device("cuda" if cuda else "cpu")
         # send the model to device
         self.model = VAE_Model(batch_size, channel, GRAIN_SIZE).to(self.device)
         # set the optimizer
-        self.optimizer = optim.Adam(self.model.parameters(), lr=1e-3)
+        self.optimizer = optim.Adam(self.model.parameters(), lr=LEARNING_RATE)
         self.batch_size = batch_size
         self.epoch = 0
-        self.train_loader = torch.utils.data.DataLoader(train_dataset, batch_size=batch_size, shuffle=True,
-                                                        **self.kwargs)
-        self.test_loader = torch.utils.data.DataLoader(test_dataset, batch_size=batch_size, shuffle=True, **self.kwargs)
+        self.train_loader = train_loader
+        self.test_loader = test_loader
 
     def train(self, log_interval=10):
         self.model.train()
@@ -62,10 +59,9 @@ class VAE:
         train_loss = 0
         # for each batch
         for batch_idx, data in enumerate(self.train_loader):
-            print("ELEM_LEN:", len(data[3]))
             print("DATA_LEN:", len(data))
             print("DATA:", data)
-            print('size DATA', data.size())
+            # TODO :=> understand why data is a list with only one elem
             data = data.to(self.device)
             self.optimizer.zero_grad()
             # get the variables
