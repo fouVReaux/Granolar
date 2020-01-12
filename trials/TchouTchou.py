@@ -1,7 +1,8 @@
 #-------------------------------------------------------------------------------
-# Titre : DataBase.py
+# Title : DataBase.py
 # Projet : Granolar
 # Description : Prototype
+# Author : Cyril Lavrat
 #-------------------------------------------------------------------------------
 import librosa
 import numpy as np
