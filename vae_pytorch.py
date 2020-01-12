@@ -12,9 +12,9 @@ import argparse
 import os
 import torch
 import matplotlib.pyplot as plt
-import src.loader as loader
+import loader as loader
 
-from src.vae import VAE
+from vae import VAE
 
 sample_rate = 44100
 data_dir = 'database/raw'

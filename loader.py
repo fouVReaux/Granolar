@@ -30,7 +30,7 @@ class Grains(Dataset):
                 (seq_t, index) = librosa.effects.trim(seq)
                 n_gr = int(seq_t.size/l_grain)
                 nb_batches = int(n_gr / batch_size)
-                for batch in range(32): # range(nb_batches * n_gr):
+                for batch in range(32):  # range(nb_batches * n_gr):
                     sub_grains = torch.from_numpy(seq_t).type(torch.float)[batch*l_grain:(batch+1)*l_grain].unsqueeze(0)
                     self.grains.append(sub_grains)
                 n_files += 1
