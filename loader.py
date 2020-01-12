@@ -1,3 +1,10 @@
+# -------------------------------------------------------------------------------
+# Title : loader.py
+# Project : Granolar
+# Description : load the database and create appropriate grains for the VAE
+# Author : Constance Douwes & Ninon Devis
+# -------------------------------------------------------------------------------
+
 from os import walk
 from os.path import join
 from natsort import natsorted

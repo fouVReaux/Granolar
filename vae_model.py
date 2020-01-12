@@ -1,7 +1,8 @@
 # -------------------------------------------------------------------------------
-# Titre : vae_model.py
-# Projet : Granolar
+# Title : vae_model.py
+# Project : Granolar
 # Description : modeling of the VAE
+# Author : Ninon Devis
 # -------------------------------------------------------------------------------
 
 # -*- coding: utf-8 -*-

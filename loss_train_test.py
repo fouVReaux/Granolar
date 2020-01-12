@@ -1,7 +1,8 @@
 # -------------------------------------------------------------------------------
-# Titre : vae.py
-# Projet : Granolar
-# Description : train, test and reconstruct the database
+# Title : loss_train_test.py
+# Project : Granolar
+# Description : compute the loss, train, test and reconstruct the database
+# Author : Ninon Devis
 # -------------------------------------------------------------------------------
 
 import torch
@@ -17,16 +18,6 @@ LEARNING_RATE = 1e-3
 beta = 0  # value for train testing
 
 
-def loss_function_2(recon_x, x, mu_z, log_var_z):
-    # BCE = torch.nn.functional.binary_cross_entropy(recon_x, x.view(16, 1, -1), reduction='sum')
-    # see Appendix B from VAE paper:
-    # Kingma and Welling. Auto-Encoding Variational Bayes. ICLR, 2014
-    # https://arxiv.org/abs/1312.6114
-    # 0.5 * sum(1 + log(sigma^2) - mu^2 - sigma^2)
-    KLD = -0.5 * torch.sum(1 + log_var_z - mu_z.pow(2) - log_var_z.exp())
-    return KLD
-
-
 def loss_function(x, mu_z, log_var_z, mu_recon, log_var_recon):
     # p(z | x) = - log(sigma) - 0.5 * log(2*pi) - (x - mu)^2 / 2 * sigma ^ 2
     recon_loss = torch.sum(log_var_recon - 0.5 * np.log(2 * np.pi)
@@ -39,7 +30,6 @@ def loss_function(x, mu_z, log_var_z, mu_recon, log_var_recon):
 class VAE:
     # device is gpu if possible
     def __init__(self, train_loader, test_loader, batch_size=128, seed=1, cuda=False):
-        # TODO: get GRAIN_SIZE and CHANNEL from train and/or test_dataset
         channel = 1
         torch.manual_seed(seed)
         # device is gpu if possible
@@ -66,7 +56,6 @@ class VAE:
             # get the variables
             data_recon, mu_z, log_var_z, mu_recon, log_var_recon = self.model(data)
             loss = loss_function(data, mu_z, log_var_z, mu_recon, log_var_recon)
-            # loss = loss_function_2(data_recon, data, mu_z, log_var_z)
             loss.backward()
             train_loss += loss.item()
             self.optimizer.step()
@@ -94,7 +83,6 @@ class VAE:
                 data_recon, mu_z, log_var_z, mu_recon, log_var_recon = self.model(data)
                 # mu_z, log_var_z, mu_recon, log_var_recon = self.model(data)
                 test_loss += loss_function(data_recon, mu_z, log_var_z, mu_recon, log_var_recon)
-                # loss = loss_function_2(data_recon, data, mu_z, log_var_z)
                 test_loss += test_loss.item()
                 self.optimizer.step()
                 # print
@@ -109,6 +97,7 @@ class VAE:
         return test_loss
 
     def create_sample(self):
+        # TODO: create appropriate sounds samples
         with torch.no_grad():
             latent_sample = torch.randn(self.model.batch_size, self.model.latent_size).to(self.device)
             sample = self.model.decode(latent_sample)

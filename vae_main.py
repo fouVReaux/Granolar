@@ -1,7 +1,8 @@
 # -------------------------------------------------------------------------------
-# Titre : vae_pytorch.py
-# Projet : Granolar
+# Title : vae_main.py
+# Project : Granolar
 # Description : get the arguments, load the dataset and compile the main code
+# Author : Ninon Devis
 # -------------------------------------------------------------------------------
 
 #!/usr/bin/env python3
@@ -14,7 +15,7 @@ import torch
 import matplotlib.pyplot as plt
 import loader as loader
 
-from vae import VAE
+from loss_train_test import VAE
 
 sample_rate = 44100
 data_dir = 'database/raw'
