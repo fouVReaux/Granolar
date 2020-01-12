@@ -1,7 +1,8 @@
 # -------------------------------------------------------------------------------
-# Titre : DataBase.py
-# Projet : Granolar
+# Title : database.py
+# Project : Granolar
 # Description : slice the database in wav of .npz
+# Authors : Ninon Devis & Cyril Lavrat
 # -------------------------------------------------------------------------------
 import librosa
 import numpy as np
@@ -44,37 +45,6 @@ class DataBase(Dataset):
             item = self.transform(item)
         # return data as a tuple of data, metadata (null)
         return item
-
-    # # Setter -------------------------------------------------------------------
-    # def set_sr(self, sr):
-    #     """
-    #     set the sampling rate of the database
-    #     """
-    #     self.sr = sr
-    #
-    # def set_type(self, type):
-    #     """
-    #     """
-    #     self.type = type
-    #     return type
-    #
-    # def set_slices_path(self, slices_path):
-    #     """
-    #     set the slice path
-    #     """
-    #     self.slices_path = slices_path
-    #
-    # def set_database_path(self, database_path):
-    #     """
-    #     set the database path
-    #     """
-    #     self.database_path = database_path
-    #
-    # def set_slices_duration(self, duration):
-    #     """
-    #     set the duration of a slice (in second)
-    #     """
-    #     self.slices_duration = duration
 
     # Slicer -------------------------------------------------------------------
     def __slice_file__(self, file_name):
@@ -121,7 +91,7 @@ class DataBase(Dataset):
 if __name__ == "__main__":
     # ---------------------------------------------------------------------------
     # To test this code add some audio (format wav) in the raw directory
-    # run python Database.py in order to slice all the wav file into subfile of
+    # run python database.py in order to slice all the wav file into subfile of
     # 5 seconds
     # ---------------------------------------------------------------------------
     db = DataBase(save_slices=False)
