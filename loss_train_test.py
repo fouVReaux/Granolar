@@ -8,6 +8,7 @@
 import torch
 from torch import optim
 import numpy as np
+import os
 
 from vae_model import VAE_Model
 
@@ -21,15 +22,16 @@ beta = 0  # value for train testing
 def loss_function(x, mu_z, log_var_z, mu_recon, log_var_recon):
     # p(z | x) = - log(sigma) - 0.5 * log(2*pi) - (x - mu)^2 / 2 * sigma ^ 2
     recon_loss = torch.sum(log_var_recon - 0.5 * np.log(2 * np.pi)
-                           + ((x.view(-1, GRAIN_SIZE) - mu_recon).pow(2)) / (2 * torch.exp(log_var_recon).pow(2)))
+                           + ((x.view(-1, GRAIN_SIZE) - mu_recon).pow(2)) / (2 * torch.exp(log_var_recon).pow(2))).cuda()
+    recon_loss.cuda()
     # Kullback-Leibler divergence
-    KLD = -0.5 * torch.sum(1 + log_var_z - mu_z.pow(2) - log_var_z.exp())
+    KLD = (-0.5 * torch.sum(1 + log_var_z - mu_z.pow(2) - log_var_z.exp())).cuda()
     return recon_loss + beta * KLD
 
 
 class VAE:
     # device is gpu if possible
-    def __init__(self, train_loader, test_loader, batch_size=128, seed=1, cuda=False):
+    def __init__(self, train_loader, test_loader, batch_size=128, seed=1, cuda=False, output_path='./save/data.pth'):
         channel = 1
         torch.manual_seed(seed)
         # device is gpu if possible
@@ -42,6 +44,8 @@ class VAE:
         self.epoch = 0
         self.train_loader = train_loader
         self.test_loader = test_loader
+        self.loss = self.train()
+        self.path = output_path
 
     def train(self, log_interval=10):
         self.model.train()
@@ -55,7 +59,7 @@ class VAE:
             self.optimizer.zero_grad()
             # get the variables
             data_recon, mu_z, log_var_z, mu_recon, log_var_recon = self.model(data)
-            loss = loss_function(data, mu_z, log_var_z, mu_recon, log_var_recon)
+            loss = loss_function(data, mu_z, log_var_z, mu_recon, log_var_recon).cuda()
             loss.backward()
             train_loss += loss.item()
             self.optimizer.step()
@@ -67,6 +71,12 @@ class VAE:
                                 loss.item() / len(data)))
         print('====> Epoch: {} Average loss: {:.4f}'.format(
             self.epoch, train_loss / len(self.train_loader.dataset)))
+
+        # # Uncomment if need to print model's state_dict
+        # print("Model's state_dict:")
+        # for param_tensor in self.model.state_dict():
+        #     print(param_tensor, "\t", self.model.state_dict()[param_tensor].size())
+
         return train_loss
 
     def test(self, log_interval=10):
@@ -82,24 +92,56 @@ class VAE:
                 # get the variables
                 data_recon, mu_z, log_var_z, mu_recon, log_var_recon = self.model(data)
                 # mu_z, log_var_z, mu_recon, log_var_recon = self.model(data)
-                test_loss += loss_function(data_recon, mu_z, log_var_z, mu_recon, log_var_recon)
+                test_loss += loss_function(data_recon, mu_z, log_var_z, mu_recon, log_var_recon).cuda()
                 test_loss += test_loss.item()
                 self.optimizer.step()
                 # print
                 if batch_idx % log_interval == 0:
                     print('Test Epoch: {} [{}/{} ({:.0f}%)]\tLoss test: {:.6f}'.format(
                         self.epoch, batch_idx * len(data), len(self.test_loader.dataset),
-                                    100. * batch_idx / len(self.test_loader),
-                                    test_loss.item() / len(data)))
+                                    100. * batch_idx / len(self.test_loader), test_loss.item() / len(data)))
         test_loss /= len(self.test_loader.dataset)
         print('====> Test set loss: {:.4f}'.format(
             self.epoch, test_loss / len(self.test_loader.dataset)))
         return test_loss
 
+    def save_training(self):
+        print('[DEBUG] Saving training .. ')
+        if not os.path.exists('./save'):
+            print("[DEBUG] Creating saving path: '{}'.. ".format(self.path))
+            os.makedirs('./save')
+
+        try:
+            torch.save({
+                'epoch': self.epoch,
+                'model_state_dict': self.model.state_dict(),
+                'optimizer_state_dict': self.optimizer.state_dict(),
+                'loss': self.loss,
+            }, self.path)
+        except:
+            print('[ERROR] Something happened while saving data set :( ... ')
+            print('[ERROR] Data set HAS NOT been saved ! ')
+
+    def resume_training(self):
+        print('[DEBUG] Restoring training .. ')
+        model = self.model
+        optimizer = self.optimizer
+        try:
+            checkpoint = torch.load(self.path)
+            model.load_state_dict(checkpoint['model_state_dict'])
+            optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
+            self.epoch = checkpoint['epoch']
+            self.loss = checkpoint['loss']
+            model.train()
+        except:
+            print('[ERROR] Something bad happened while restoring data set :( ... ')
+            print('[ERROR] Data set HAS NOT been restored ! ')
+
     def create_sample(self):
-        # TODO: create appropriate sounds samples
         with torch.no_grad():
-            latent_sample = torch.randn(self.model.batch_size, self.model.latent_size).to(self.device)
+            latent_sample = torch.randn(self.model.batch_size, self.model.latent_size).to(self.device).cuda()
             sample = self.model.decode(latent_sample)
             return sample
+
+
 

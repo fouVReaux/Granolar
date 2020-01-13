@@ -24,7 +24,7 @@ data_dir = 'database/raw'
 parser = argparse.ArgumentParser(description='VAE MNIST Example')
 parser.add_argument('--batch-size', type=int, default=16, metavar='N',
                     help='input batch size for training (default: 16)')
-parser.add_argument('--epochs', type=int, default=10, metavar='N',
+parser.add_argument('--epochs', type=int, default=2, metavar='N',
                     help='number of epochs to train (default: 10)')
 parser.add_argument('--no-cuda', action='store_true', default=False,
                     help='enables CUDA training')
@@ -50,6 +50,13 @@ if __name__ == "__main__":
         losses.append(loss)
         test_loss = vae.test()
         sample = vae.create_sample()
+
+    # Saving data set
+    vae.save_training()
+
+    # Restoring data set
+    # vae.resume_training()
+
     plt.plot(losses)
     plt.show()
-    print("ok")
+    print("worked")
