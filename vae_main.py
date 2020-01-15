@@ -5,7 +5,7 @@
 # Author : Ninon Devis
 # -------------------------------------------------------------------------------
 
-#!/usr/bin/env python3
+# !/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
 from __future__ import print_function
@@ -21,7 +21,7 @@ sample_rate = 44100
 data_dir = 'database/raw'
 
 # get the arguments, if not on command line, the arguments are the default
-parser = argparse.ArgumentParser(description='VAE MNIST Example')
+parser = argparse.ArgumentParser(description='Granular VAE')
 parser.add_argument('--batch-size', type=int, default=50, metavar='N',
                     help='input batch size for training (default: 16)')
 parser.add_argument('--epochs', type=int, default=200, metavar='N',
@@ -42,9 +42,11 @@ if __name__ == "__main__":
     if not os.path.exists('../results/'):
         os.makedirs('../results')
 
+    # Get the database for train and test
     train_loader, test_loader = loader.get_data_loaders(data_dir, batch_size=args.batch_size, sr=sample_rate)
     vae = VAE(train_loader, test_loader, batch_size=args.batch_size, seed=args.seed, cuda=cuda)
     losses = []
+    # Compute and store the loss, create a sample every epochs
     for epoch in range(args.epochs):
         loss = vae.train()
         losses.append(loss)
@@ -54,9 +56,10 @@ if __name__ == "__main__":
     # Saving data set
     vae.save_training()
 
-    # Restoring data set
+    # Restoring data set // Uncomment if model trained
     # vae.resume_training()
 
+    # Plot the loss evolution
     plt.plot(losses)
     plt.show()
-    print("worked")
+    print("genius")
