@@ -9,13 +9,14 @@ import torch
 from torch import optim
 import numpy as np
 import os
+from torch.nn import functional as F
+
 
 from vae_model import VAE_Model
 
 GRAIN_SIZE = 512
 CHANNEL = 1
 LEARNING_RATE = 1e-3
-# Reconstruction + KL divergence losses summed over all elements and batch
 beta = 4  # value for train testing
 
 
@@ -32,6 +33,8 @@ def loss_function(x, mu_z, log_var_z, mu_recon, log_var_recon):
     # reconstruction loss: p(z | x) = - log(sigma) - 0.5 * log(2*pi) - (x - mu)^2 / 2 * sigma ^ 2
     recon_loss = torch.sum(log_var_recon - 0.5 * np.log(2 * np.pi)
                            + ((x.view(-1, GRAIN_SIZE) - mu_recon).pow(2)) / (2 * torch.exp(log_var_recon).pow(2)))  # .cuda()
+    # recon_loss = F.nn.MSELoss()
+
     # latent loss: Kullback-Leibler divergence
     KLD = (-0.5 * torch.sum(1 + log_var_z - mu_z.pow(2) - log_var_z.exp()))  # .cuda()
     return recon_loss + beta * KLD

@@ -10,10 +10,12 @@
 
 from __future__ import print_function
 import argparse
+import numpy as np
 import os
 import torch
 import matplotlib.pyplot as plt
 import loader as loader
+import librosa
 import vae_model
 
 from loss_train_test import VAE
@@ -49,6 +51,7 @@ if __name__ == "__main__":
     losses = []
     datas = None
     recons = None
+    concat = None
     # Compute and store the loss, create a sample every epochs
     for epoch in range(args.epochs):
         loss, datas, recons = vae.train()
@@ -63,32 +66,19 @@ if __name__ == "__main__":
         reconstruction_plot.plot(recons[1][0][0].detach().numpy())
         reconstruction_plot.set_title('Reconstruction')
         plt.show()
-
-# sound reconstruction using librosa
+        # sound reconstruction using librosa
+        for recon in recons:
+            for i in range(recon.size()[0]):
+                new_rec = recon[i][0].detach().numpy()
+                if concat is None:
+                    concat = new_rec
+                else:
+                    concat = np.concatenate((concat, new_rec))
+            print('concat', concat)
+            librosa.output.write_wav('./results/reconstruction.wav', concat, sample_rate, norm=False)
 
     # Plot the loss evolution
     plt.plot(losses)
     plt.show()
     print("genius")
 
-
-
-# # plot the latent space in 3D: to achieve, maybe use correlation matrix of latent spaces??
-#     z = vae_model.encoded(datas)
-#     plt.figure(figsize=(6, 6))
-#     plt.scatter(z[:, 0],z[:, 1], c=np.argmax(y_sample, 1))
-#     plt.colorbar()
-#     plt.grid()
-#
-# x_test_encoded = encoder.predict(x_test, batch_size=batch_size)
-# plt.figure(figsize=(6, 6))
-# plt.scatter(x_test_encoded[:, 0], x_test_encoded[:, 1], c=y_test)
-# plt.colorbar()
-# plt.show()
-#
-# # sound reconstruction using librosa
-#
-#     # Plot the loss evolution
-#     plt.plot(losses)
-#     plt.show()
-#     print("genius")
