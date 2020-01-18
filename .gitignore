@@ -1,5 +1,5 @@
 # MNIST downloaded data
-data
+mnist_vae/vae_lowlevel_MNIST [Ninon]/data
 results/
 
 # Max SDK
