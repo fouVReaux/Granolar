@@ -1,7 +1,7 @@
 # -------------------------------------------------------------------------------
-# Title : vae_main.py
+# Title : comparision.py
 # Project : Granolar
-# Description : get the arguments, load the dataset and compile the main code
+# Description : plot some grains and the reconstruction of those grains in order to check the training
 # Author : Ninon Devis
 # -------------------------------------------------------------------------------
 
@@ -14,6 +14,7 @@ import os
 import torch
 import matplotlib.pyplot as plt
 import loader as loader
+import vae_model
 
 from loss_train_test import VAE
 
@@ -46,20 +47,48 @@ if __name__ == "__main__":
     train_loader, test_loader = loader.get_data_loaders(data_dir, batch_size=args.batch_size, sr=sample_rate)
     vae = VAE(train_loader, test_loader, batch_size=args.batch_size, seed=args.seed, cuda=cuda)
     losses = []
+    datas = None
+    recons = None
     # Compute and store the loss, create a sample every epochs
     for epoch in range(args.epochs):
-        loss = vae.train()
+        loss, datas, recons = vae.train()
         losses.append(loss)
         test_loss = vae.test()
         sample = vae.create_sample()
+        # plot the grains and reconstruction of the grains (a modifier)
+        fig, (input_plot, reconstruction_plot) = plt.subplots(1, 2)
+        plt.suptitle('comparison')
+        input_plot.plot(datas[1][0][0].detach().numpy())
+        input_plot.set_title('Input')
+        reconstruction_plot.plot(recons[1][0][0].detach().numpy())
+        reconstruction_plot.set_title('Reconstruction')
+        plt.show()
 
-    # Saving data set
-    vae.save_training()
-
-    # Restoring data set // Uncomment if model trained
-    # vae.resume_training()
+# sound reconstruction using librosa
 
     # Plot the loss evolution
     plt.plot(losses)
     plt.show()
     print("genius")
+
+
+
+# # plot the latent space in 3D: to achieve, maybe use correlation matrix of latent spaces??
+#     z = vae_model.encoded(datas)
+#     plt.figure(figsize=(6, 6))
+#     plt.scatter(z[:, 0],z[:, 1], c=np.argmax(y_sample, 1))
+#     plt.colorbar()
+#     plt.grid()
+#
+# x_test_encoded = encoder.predict(x_test, batch_size=batch_size)
+# plt.figure(figsize=(6, 6))
+# plt.scatter(x_test_encoded[:, 0], x_test_encoded[:, 1], c=y_test)
+# plt.colorbar()
+# plt.show()
+#
+# # sound reconstruction using librosa
+#
+#     # Plot the loss evolution
+#     plt.plot(losses)
+#     plt.show()
+#     print("genius")
