@@ -26,6 +26,7 @@ test_split = .2
 shuffle_dataset = True
 life_seed = 42
 
+
 class Grains(Dataset):
     def __init__(self, path, sr, batch_size, l_grain, max_files):
         self.grains = []
@@ -76,7 +77,7 @@ def get_data_loaders(data_dir, batch_size=16, sr=22050, l_grain=512, max_files=N
 # main code
 if __name__ == "__main__":
     i = 0
-    n = 10
+    n = 2
     train_loader, test_loader = get_data_loaders(data_dir, sr=sample_rate, l_grain=l_grain)
     for grains in train_loader:
         # Plotting the n_th batch

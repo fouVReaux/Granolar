@@ -9,13 +9,14 @@ import torch
 from torch import optim
 import numpy as np
 import os
+from torch.nn import functional as F
+
 
 from vae_model import VAE_Model
 
 GRAIN_SIZE = 512
 CHANNEL = 1
 LEARNING_RATE = 1e-3
-# Reconstruction + KL divergence losses summed over all elements and batch
 beta = 4  # value for train testing
 
 
@@ -31,10 +32,11 @@ def loss_function(x, mu_z, log_var_z, mu_recon, log_var_recon):
     """
     # reconstruction loss: p(z | x) = - log(sigma) - 0.5 * log(2*pi) - (x - mu)^2 / 2 * sigma ^ 2
     recon_loss = torch.sum(log_var_recon - 0.5 * np.log(2 * np.pi)
-                           + ((x.view(-1, GRAIN_SIZE) - mu_recon).pow(2)) / (2 * torch.exp(log_var_recon).pow(2))).cuda()
-    recon_loss.cuda()
+                           + ((x.view(-1, GRAIN_SIZE) - mu_recon).pow(2)) / (2 * torch.exp(log_var_recon).pow(2)))  # .cuda()
+    # recon_loss = F.nn.MSELoss()
+
     # latent loss: Kullback-Leibler divergence
-    KLD = (-0.5 * torch.sum(1 + log_var_z - mu_z.pow(2) - log_var_z.exp())).cuda()
+    KLD = (-0.5 * torch.sum(1 + log_var_z - mu_z.pow(2) - log_var_z.exp()))  # .cuda()
     return recon_loss + beta * KLD
 
 
@@ -65,6 +67,12 @@ class VAE:
         self.loss = self.train()
         self.path = output_path
 
+    def run(self, data):
+        data.to(self.device)
+        self.optimizer.zero_grad()
+        return self.model(data)
+
+
     def train(self, log_interval=10):
         """
         Trains the model every epochs by calculating the loss
@@ -74,20 +82,22 @@ class VAE:
         self.model.train()
         self.epoch += 1
         train_loss = 0
+        datas = []
+        recons = []
         # for each batch
         for batch_idx, data in enumerate(self.train_loader):
             print("DATA_LEN:", len(data))
             print("DATA:", data)
-            data = data.to(self.device)
-            self.optimizer.zero_grad()
-            # get the variables
-            data_recon, mu_z, log_var_z, mu_recon, log_var_recon = self.model(data)
+            datas.append(data)
+            data_recon, mu_z, log_var_z, mu_recon, log_var_recon = self.run(data)
+            recons.append(data_recon)
             # compute the loss function
-            loss = loss_function(data, mu_z, log_var_z, mu_recon, log_var_recon).cuda()
+            loss = loss_function(data, mu_z, log_var_z, mu_recon, log_var_recon)  # .cuda()
             # compute loss' gradient for every parameter
             loss.backward()
             # increment the average loss for each sample
             train_loss += loss.item()
+            print('train_loss', train_loss)
             self.optimizer.step()
             # print
             if batch_idx % log_interval == 0:
@@ -103,7 +113,7 @@ class VAE:
         # for param_tensor in self.model.state_dict():
         #     print(param_tensor, "\t", self.model.state_dict()[param_tensor].size())
 
-        return train_loss
+        return train_loss, datas, recons
 
     def test(self, log_interval=10):
         """
@@ -118,12 +128,10 @@ class VAE:
         with torch.no_grad():
             # for i, (data, _) in enumerate(self.test_loader):
             for batch_idx, data in enumerate(self.test_loader):
-                data = data.to(self.device)
-                self.optimizer.zero_grad()
                 # get the variables
-                data_recon, mu_z, log_var_z, mu_recon, log_var_recon = self.model(data)
+                data_recon, mu_z, log_var_z, mu_recon, log_var_recon = self.run(data)
                 # compute the loss function
-                test_loss = loss_function(data_recon, mu_z, log_var_z, mu_recon, log_var_recon).cuda()
+                test_loss = loss_function(data_recon, mu_z, log_var_z, mu_recon, log_var_recon)  # .cuda()
                 # increment the average loss for each sample
                 test_loss += test_loss.item()
                 self.optimizer.step()
@@ -181,7 +189,7 @@ class VAE:
         :return: new samples with same attributes as inputs
         """
         with torch.no_grad():
-            latent_sample = torch.randn(self.model.batch_size, self.model.latent_size).to(self.device).cuda()
+            latent_sample = torch.randn(self.model.batch_size, self.model.latent_size).to(self.device)  # .cuda()
             sample = self.model.decode(latent_sample)
             return sample
 
