@@ -4,6 +4,7 @@
 	Copyright 2011 Cycling '74
 */
 
+// TODO : optimization when not connected
 
 #include "ext.h"		// standard Max include
 #include "ext_obex.h"	// required for "new" (Max 4.5 and later) style objects
@@ -12,70 +13,57 @@
 #include <sndfile.h>
 //#include <math.h>
 
+#define PI 3.141592653
+
 
 typedef struct _wavfile {
 	SNDFILE* file;
 	SF_INFO file_info;
 } wavfile;
 
-// struct to represent the object's state
-typedef struct _linked_list {
-	t_double* buf;
-	int length_buf;
-	struct _linked_list* next;
-} linked_list;
 
-int length_linked_list(const linked_list* l) {
-	int length = 0;
-	while (l) {
-		length += l->length_buf;
-		l = l->next;
+
+unsigned modulo(int value, unsigned m) {
+	int mod = value % (int)m;
+	if (value < 0) {
+		mod += m;
 	}
-	return length;
-}
-t_double* linked_list_to_grain(const linked_list* l, int* grain_length) {
-	*grain_length = length_linked_list(l);
-	t_double* grain = malloc(*grain_length * sizeof(t_double));
-	if (grain)
-	{
-		int n = 0;
-		while (l) {
-			for (int i = 0; i < l->length_buf; i++) {
-				grain[n] = l->buf[i];
-				n++;
-			}
-			l = l->next;
-		}
-		return grain;
-	}
+	return mod;
 }
 
-void free_linked_list(linked_list* l) {
-	while (l) {
-//!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! Problem here : can't free l->buf !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-		//free(l->buf);
-		linked_list* next = l->next;
-		free(l);
-		l = next;
-	}
-}
 
 
 
 typedef struct _granolar {
 	t_pxobject	s_ob;			// audio object "base class"
-	double		freq;			// length of the grain
-	int			start;			// start position of the grain
-	int			current_start;	// start if exceeded buffer
-	int			current_length;
-	bool		record;
-	linked_list* recording_buf;
-	linked_list* last;
+
+	double		freq;
+	double		freq_fonda;		// frequency of the grain when it's read at speed 1x
+	double		current_step;
+	bool		freq_connected;
+
+	double		start;			// start position of the grain
+	double		current_start;	// start cursor
+	bool		start_connected;
+
+
 	t_double*	grain;
-	int			grain_length;
+	unsigned	grain_length;
+
+	//for the filter
+	t_double	previous_y;
+	double		alpha;
+	double		alpha_opt;
+
+	double		sr;
+	bool		sr_set;
+
+	double		cutoff;
+	
 	//wavfile	grain;			// wav file for the grain
 
 } t_granolar;
+
 
 
 
@@ -93,19 +81,6 @@ void granolar_dsp64(t_granolar *x, t_object *dsp64, short *count, double sampler
 static t_class *s_granolar_class = NULL;
 
 
-/*wavfile loadWavFile(char* in_file_name) {
-	wavfile new_file;
-	int fs;
-
-
-	new_file.file = sf_open(in_file_name, SFM_READ, &new_file.file_info);
-	//sf_close(inFile); this has to be done in another function
-
-	fs = new_file.file_info.samplerate;
-	printf("Sample Rate = %d Hz\n", fs);
-
-	return new_file;
-}*/
 
 //***********************************************************************************************
 
@@ -135,12 +110,31 @@ void *granolar_new(t_symbol *s, long argc, t_atom *argv)
 		float buf = 0;
 		atom_arg_getfloat(&buf, 0, argc, argv);	// get typed in args
 		x->freq = (double) buf;
+
 		atom_arg_getfloat(&buf, 1, argc, argv);	// ...
 		x->start = (int) buf;
-		x->record = false;
-		x->last = NULL;
-		x->grain = NULL;
-		x->grain_length = 0;
+		x->current_start = (double) buf;
+
+		atom_arg_getfloat(&buf, 2, argc, argv);	// ...
+		x->cutoff = 1 / buf;
+
+		char* path_to_grain = "E:\\Documents\\ATIAM\\Informatique\\Granolar\\max-sdk-8.0.3\\source\\audio\\granolar~\\grain_test1.wav";
+		wavfile new_file;
+
+		new_file.file = sf_open(path_to_grain, SFM_READ, &new_file.file_info);
+		
+		x->grain = calloc(new_file.file_info.frames, sizeof(t_double));
+		if (new_file.file) {
+			x->grain_length = sf_readf_double(new_file.file, (double*)x->grain, new_file.file_info.frames); //); //read 1 sec
+			sf_close(new_file.file);// this has to be done in another function
+		}
+
+
+
+		x->start_connected = false;
+		x->freq_connected = false;
+		x->current_step = 1.;
+		x->previous_y = 0.;
 	}
 	return x;
 }
@@ -170,9 +164,15 @@ void granolar_float(t_granolar *x, double value)
 {
 	long inlet_number = proxy_getinlet((t_object *)x);
 
-	if (inlet_number == 1) {
-		x->current_length =  (int)round((double)x->current_length * x->freq / value);
+	if (inlet_number == 0) {
+		//x->current_length =  (int)round((double)x->current_length * x->freq / value);
 		x->freq = value;
+		if (x->sr_set) {
+			x->current_step = x->freq / x->freq_fonda;
+			double buf = x->cutoff / x->current_step;
+			x->alpha = buf / (buf + 1);
+
+		}
 	}
 	else
 		object_error((t_object *)x, "oops -- maybe you sent a number to the wrong inlet?");
@@ -184,12 +184,11 @@ void granolar_int(t_granolar *x, long value)
 {
 	long inlet_number = proxy_getinlet((t_object*)x);
 
-	if (inlet_number == 1) {
-		x->current_length = (int)round((double)x->current_length * x->freq / value);
-		x->freq = value;
+	if (inlet_number == 0) {
+		granolar_float(x, (double)value);
 	}
-	else if (inlet_number == 2) {
-		x->current_start += x->start - value;
+	else if (inlet_number == 1) {
+		x->current_start +=  (double)value - x->start ;
 		x->start = value;
 	}
 	else
@@ -197,62 +196,79 @@ void granolar_int(t_granolar *x, long value)
 }
 
 void granolar_bang(t_granolar* x) {
-	x->record = !x->record;
-	if (x->record) {
 
-		object_post((t_object*)x, "Recording is on ! ");
-	}
-	else {
-		x->grain = linked_list_to_grain(x->recording_buf,&x->grain_length);
-		free_linked_list(x->recording_buf);
-		x->last = NULL;
-		object_post((t_object*)x, "Recording is off ! ");
-	}
 }
 
 //***********************************************************************************************
 
+
+void compute_freq_fonda(t_granolar* x, double samplerate) {
+	
+}
+
 void granolar_update_time_freq(t_granolar* x, double freq, int start) {
-	x->current_length = (int)round((double)x->current_length * x->freq / freq);
-	x->current_start += x->start - start;
+
+	//x->current_length = (int)round((double)x->current_length * x->freq / freq);
+	if (x->start_connected && start < x->grain_length && start >= 0) {
+		x->current_start += start - x->start;
+		
+		x->start = start;
+		x->freq_fonda = x->sr / (x->grain_length - x->start);
+	}
+	if (x->freq_connected) {
+		x->current_step = freq / x->freq_fonda;
+		double buf = 2 * PI / x->current_step;
+		x->alpha = buf / (buf + 1);
+	}
+
 }
 
 
-// Perform (signal) Method for 3 input signals, 64-bit MSP
 void granolar_perform64(t_granolar *x, t_object *dsp64, double **ins, long numins, double **outs, long numouts, long sampleframes, long flags, void *userparam)
 {
 	t_double	*freq = ins[0];		// Input 1
-	t_int		*start = (t_int*) ins[1];
-	t_double	*record_in = ins[2];
+	t_double	*start =  ins[1];
 	t_double	*out = outs[0];	// Output 1
-	if (x->record) {
-		linked_list* new_buf = malloc(sizeof(linked_list));
-		if (new_buf)
-		{
-			new_buf->buf = calloc(sampleframes , sizeof(t_double));
-			new_buf->length_buf = sampleframes;
-			new_buf->next = NULL;
-			if (!x->last) {
-				x->recording_buf = x->last = new_buf;
-			}
-			else {
-				x->last = x->last->next = new_buf;
-			}
-		}
-	}
+	
 
 	int			n = sampleframes;
-	t_double	value;
 
 	
 	while (n--) {
-		value = *freq++;
-		if(x->record && x->last && x->last->buf)
-			x->last->buf[sampleframes - n - 1] = *record_in++;
-		else if (x->grain) {
-			*out++ = x->grain[x->current_start++ % x->grain_length];
+		/*int floor_index = (int)x->current_start;
+
+		if (x->current_start > (double)x->grain_length)
+			x->current_start += x->start - x->grain_length;
+
+		double now_y = (x->alpha * x->grain[floor_index] + \
+			(1 - x->alpha) * x->previous_y);
+		x->previous_y = now_y;
+		*out++ = now_y;
+		x->current_start += 1;*/
+		granolar_update_time_freq(x, *freq++, (int) *start++);
+		if (x->current_start > (double)x->grain_length)
+			x->current_start += x->start - x->grain_length ;
+		int floor_index = (int)x->current_start;
+		int next_index = floor_index + 1;
+		if(next_index == x->grain_length)
+			next_index += x->start - x->grain_length;
+		double mantissa = x->current_start - floor_index;
+
+		double now_y = (x->alpha * x->grain[next_index] + \
+			(1 - x->alpha) * x->previous_y);
+
+		*out++ = (1. - mantissa) * x->previous_y + mantissa * now_y;
+		x->previous_y = now_y;
+
+		x->current_start += x->current_step;
+		int next_floor_index = (int)x->current_start;
+		for (int i = next_index + 1; i < next_floor_index ; i++) {
+			int current_index = modulo(i - x->start, x->grain_length - x->start);
+			x->previous_y = x->alpha * x->grain[current_index] + \
+				(1 - x->alpha) * x->previous_y;
 		}
-		*out++ = value;
+
+		
 	}
 }
 
@@ -262,6 +278,18 @@ void granolar_perform64(t_granolar *x, t_object *dsp64, double **ins, long numin
 
 void granolar_dsp64(t_granolar *x, t_object *dsp64, short *count, double samplerate, long maxvectorsize, long flags)
 {
+	x->freq_connected = count[0];
+	x->start_connected = count[1];
+	if (!x->sr_set) {
+		x->sr = samplerate;
+		x->sr_set = true;
+
+		x->freq_fonda = x->sr / (x->grain_length - x->start);
+		x->current_step = x->freq / x->freq_fonda;
+		double buf = x->cutoff / x->current_step;
+		x->alpha = buf / (buf + 1);
+
+	}
 	object_method(dsp64, gensym("dsp_add64"), x, granolar_perform64, 0, NULL);
 }
 
