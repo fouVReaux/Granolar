@@ -1,7 +1,8 @@
 # -------------------------------------------------------------------------------
 # Title : comparision.py
 # Project : Granolar
-# Description : plot some grains and the reconstruction of those grains in order to check the training
+# Description : identical as vae_main.py adding plotting of some grains and
+# the .wav reconstruction of those grains in order to check the training
 # Author : Ninon Devis
 # -------------------------------------------------------------------------------
 
@@ -59,7 +60,7 @@ if __name__ == "__main__":
         losses.append(loss)
         test_loss = vae.test()
         sample = vae.create_sample()
-        # plot the grains and reconstruction of the grains (a modifier)
+        # plot the grains and reconstruction of the grains
         fig, (input_plot, reconstruction_plot) = plt.subplots(1, 2)
         plt.suptitle('comparison')
         input_plot.plot(datas[1][0][0].detach().numpy())
@@ -67,7 +68,7 @@ if __name__ == "__main__":
         reconstruction_plot.plot(recons[1][0][0].detach().numpy())
         reconstruction_plot.set_title('Reconstruction')
         plt.show()
-        # sound reconstruction using librosa
+        # sound reconstruction
         for recon in recons:
             for i in range(recon.size()[0]):
                 new_rec = recon[i][0].detach().numpy()
