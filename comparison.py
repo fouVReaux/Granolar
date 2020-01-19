@@ -39,6 +39,7 @@ parser.add_argument('--log-interval', type=int, default=10, metavar='N',
 args = parser.parse_args()
 
 cuda = not args.no_cuda and torch.cuda.is_available()
+print("cuda available", torch.cuda.is_available())
 
 # main code
 if __name__ == "__main__":
