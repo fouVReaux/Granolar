@@ -29,7 +29,7 @@ You need to have pyo installed, and also wxpython to have the pyo gui. Just run:
 pip3 install pyo
 pip3 install wxpython
 ```
-
+The file simple_OSC_control.pd is a Pure Data patch for sending simple OSC messages to control the synth. To control recover_model.py you need to send one element tuples of floats in the range (0,1). To control recover_model_batch.py you need to send tuples of 16 floats in the range of (0,1).
 
 ## Content
 
