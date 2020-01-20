@@ -10,10 +10,23 @@ See the requirements folder for the compulsory libraries
 pip3 install -r requirements.txt
 ```
 
-## Run it
+## To train the model, run
 
 ```bash
 python3 vae_main.py
+```
+
+## To load the trained model and start the synth
+Run one of the following scripts:
+
+\- recover_model.py
+\- recover_model_batch.py
+
+You need to have pyo installed, and also wxpython to have the pyo gui. Just run:
+
+```bash
+pip3 install pyo
+pip3 install wxpython
 ```
 
 
