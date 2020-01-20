@@ -1,7 +1,14 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-First recover the saved model, then run the granular script
+Loads batches of grains in real time to a table to loop and manipulate.
+
+The points chosen have all the same coordinates in all dimensions, 
+and are chosen by a float from 0 to 1 sent by OSC.
+
+Running the decoder and updating the table adds a considerable lag between choice of grains, so be careful with the speed of incoming OSC messages.
+
+
 @author: mano
 """
 
@@ -50,7 +57,7 @@ port=9001
 a=torch.empty(vae.model.batch_size,vae.model.latent_size)
 a.fill_(.5)
 sample=vae.model.decode(a)
-grain=sample[0].flatten().detach().numpy()
+grain=sample[1].flatten().detach().numpy()
 
 #Initialize the pyo audio server.
 s=Server().boot()
@@ -66,7 +73,7 @@ env = HannTable()
 
 #Granulator object allows the control over the grains
 g = Granulator(snd, env, .5, 0, 1, mul=.1).out()
-g.ctrl()
+#g.ctrl()
 def changeCoords(address,*args):
     if address=="/coord":
         print ("Coords are:",args)
