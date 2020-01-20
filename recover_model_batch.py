@@ -23,7 +23,7 @@ from loss_train_test import VAE
 sample_rate = 44100
 data_dir = 'database/raw'
 
-# get the arguments, if not on command line, the arguments are the default
+# Get the arguments, if not on command line, the arguments are the default
 parser = argparse.ArgumentParser(description='Granular VAE')
 parser.add_argument('--batch-size', type=int, default=50, metavar='N',
                     help='input batch size for training (default: 16)')
@@ -40,7 +40,9 @@ args = parser.parse_args()
 
 train_loader, test_loader = loader.get_data_loaders(data_dir, batch_size=args.batch_size, sr=sample_rate)
 vae = VAE(train_loader, test_loader, batch_size=args.batch_size, seed=args.seed,cuda=False)
+
 vae.resume_training()  
+vae.model.eval()
 
 #In this part a trajectory is initialized and the server is started.
 from pyo import *
@@ -80,6 +82,8 @@ dur = Noise(.001, .1)
 g = Granulator(snd, env, 1, pos, dur, mul=.1).out()
 g.ctrl()
 
+#Function to be called whenever a new OSC message is received
+
 def changeCoords(address,*args):
     if address=="/coord":
         print ("Coords are:",args)
@@ -91,6 +95,7 @@ def changeCoords(address,*args):
             sample[i]=vae.model.decode(a[i:i+vae.model.batch_size])[1].detach().flatten()
         grain=sample.flatten().detach().numpy()
         snd.replace(grain.tolist())
+#Scans for new OSC messages in the specified port and calls the above function.
 
 scan = OscDataReceive(port=port, address="*", function=changeCoords)
 
