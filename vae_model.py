@@ -30,7 +30,7 @@ class VAE_Model(nn.Module):
         strides = [1, 2, 4, 4]
         paddings = [3, 4, 5, 7]
         # encoder built as a sequential
-        self.encoder = nn.Sequential().cuda()
+        self.encoder = nn.Sequential()  # .cuda()
         self.input_pad = 16
         l_out = self.grain_size
         for i, (c_in, c_out, kernel, stride, padding) in enumerate(zip(channels[:-1], channels[1:], kernel_sizes, strides, paddings)):
@@ -44,31 +44,31 @@ class VAE_Model(nn.Module):
         self.l_enc = l_out
         # gaussian encoder
         self.latent_size = 16
-        self.encoder_fc = nn.Linear(self.l_enc, self.latent_size).cuda()
+        self.encoder_fc = nn.Linear(self.l_enc, self.latent_size)  # .cuda()
         # always have same dimensions
-        self.enc_mu = nn.Linear(self.latent_size, self.latent_size).cuda()
-        self.enc_log_var = nn.Linear(self.latent_size, self.latent_size).cuda()
+        self.enc_mu = nn.Linear(self.latent_size, self.latent_size)  # .cuda()
+        self.enc_log_var = nn.Linear(self.latent_size, self.latent_size)  # .cuda()
 
         # gaussian decoder
-        self.decoder_fc = nn.Linear(self.latent_size, self.l_enc).cuda()
+        self.decoder_fc = nn.Linear(self.latent_size, self.l_enc)  # .cuda()
         # gaussian decoder layers built as a mirror of the encoder
         channels = channels[::-1]
         kernel_sizes = kernel_sizes[::-1]
         strides = strides[::-1]
         paddings = [6, 5, 4, 1]
         # decoder built as a sequential
-        self.decoder = nn.Sequential().cuda()
+        self.decoder = nn.Sequential()  # .cuda()
         for i, (c_in, c_out, kernel, stride, padding) in enumerate(zip(channels[:-1], channels[1:], kernel_sizes, strides, paddings)):
             # padding = math.ceil(kernel / 2)
             self.decoder.add_module("dec_conv_" + str(i),
                                     nn.ConvTranspose1d(c_in, c_out, kernel_size=kernel, stride=stride, padding=padding))
             self.decoder.add_module("dec_norm_" + str(i), nn.BatchNorm1d(c_out))
-            self.decoder.add_module("dec_relu_" + str(i), nn.ReLU())
+            # self.decoder.add_module("dec_relu_" + str(i), nn.ReLU()) Useless as it delete negative values
             l_out = (l_out - 1) * stride - 2 * padding + kernel
             print('l decode', l_out)
         self.decoder.add_module("dec_tanh", nn.Tanh())
-        self.dec_mu = nn.Linear(self.grain_size, self.grain_size).cuda()
-        self.dec_log_var = nn.Linear(self.grain_size, self.grain_size).cuda()
+        self.dec_mu = nn.Linear(self.grain_size, self.grain_size)  # .cuda()
+        self.dec_log_var = nn.Linear(self.grain_size, self.grain_size)  # .cuda()
 
         # print the architecture of the model
         print(self.encoder)
@@ -83,10 +83,10 @@ class VAE_Model(nn.Module):
         :return: encoded gaussian parameters
         """
         x = self.encoder(data)
-        x = x.view(self.batch_size, self.l_enc).cuda()
-        fc_x = F.relu(self.encoder_fc(x)).cuda()
+        x = x.view(self.batch_size, self.l_enc)  # .cuda()
+        fc_x = F.relu(self.encoder_fc(x))  # .cuda()
 
-        return self.enc_mu(fc_x), self.enc_log_var(fc_x).cuda()
+        return self.enc_mu(fc_x), self.enc_log_var(fc_x)  # .cuda()
 
     def decode(self, z):
         """
@@ -95,11 +95,11 @@ class VAE_Model(nn.Module):
         :return: reconstructed parameters
         """
         print(z.shape)
-        fc_z = self.decoder_fc(z).cuda()
-        x = F.relu(fc_z).cuda()
-        data_recon = self.decoder(x.unsqueeze(1)).cuda()
-        mu_recon = self.dec_mu(data_recon).cuda()
-        log_var_recon = self.dec_log_var(data_recon).cuda()
+        fc_z = self.decoder_fc(z)  # .cuda()
+        x = F.relu(fc_z)  # .cuda()
+        data_recon = self.decoder(x.unsqueeze(1))  # .cuda()
+        mu_recon = self.dec_mu(data_recon)  # .cuda()
+        log_var_recon = self.dec_log_var(data_recon)  # .cuda()
 
         return data_recon, mu_recon, log_var_recon
 
@@ -110,8 +110,11 @@ class VAE_Model(nn.Module):
         :param log_var_z: standard deviation of the latent space
         :return: latent space variable
         """
-        std = torch.exp(mu_z + 0.5 * log_var_z).cuda()
-        eps = torch.randn_like(std).cuda()
+        std = torch.exp(0.5 * log_var_z)  # .cuda()
+        eps = torch.randn_like(std)  # .cuda()
+        z = (mu_z + eps * std)  # .cuda()
+
+        return z
 
 
     def forward(self, data):
@@ -122,7 +125,7 @@ class VAE_Model(nn.Module):
         """
         mu_z, log_var_z = self.encode(data)
         print('size mu:', mu_z.size(), 'size log_var:', log_var_z.size())
-        z = self.reparameterize(mu_z, log_var_z).cuda()
+        z = self.reparameterize(mu_z, log_var_z)  # .cuda()
         data_recon, mu_recon, log_var_recon = self.decode(z)
 
         return data_recon, mu_z, log_var_z, mu_recon, log_var_recon

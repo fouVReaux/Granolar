@@ -32,11 +32,10 @@ def loss_function(x, mu_z, log_var_z, mu_recon, log_var_recon):
     """
     # reconstruction loss: p(z | x) = - log(sigma) - 0.5 * log(2*pi) - (x - mu)^2 / 2 * sigma ^ 2
     recon_loss = torch.sum(log_var_recon - 0.5 * np.log(2 * np.pi)
-                           + ((x.view(-1, GRAIN_SIZE) - mu_recon).pow(2)) / (2 * torch.exp(log_var_recon).pow(2))).cuda()
-    # recon_loss = F.nn.MSELoss()
+                           + ((x.view(-1, GRAIN_SIZE) - mu_recon).pow(2)) / (2 * torch.exp(log_var_recon).pow(2)))  # .cuda()
 
     # latent loss: Kullback-Leibler divergence
-    KLD = (-0.5 * torch.sum(1 + log_var_z - mu_z.pow(2) - log_var_z.exp())).cuda()
+    KLD = (-0.5 * torch.sum(1 + log_var_z - mu_z.pow(2) - log_var_z.exp()))  # .cuda()
     return recon_loss + beta * KLD
 
 
@@ -92,7 +91,7 @@ class VAE:
             data_recon, mu_z, log_var_z, mu_recon, log_var_recon = self.run(data)
             recons.append(data_recon)
             # compute the loss function
-            loss = loss_function(data, mu_z, log_var_z, mu_recon, log_var_recon).cuda()
+            loss = loss_function(data, mu_z, log_var_z, mu_recon, log_var_recon)  # .cuda()
             # compute loss' gradient for every parameter
             loss.backward()
             # increment the average loss for each sample
@@ -122,7 +121,7 @@ class VAE:
         :return: the new loss computed from the testing
         """
         self.model.eval()
-        self.epoch += 1
+        # self.epoch += 1
         test_loss = 0
         comparison = None
         with torch.no_grad():
@@ -131,7 +130,7 @@ class VAE:
                 # get the variables
                 data_recon, mu_z, log_var_z, mu_recon, log_var_recon = self.run(data)
                 # compute the loss function
-                test_loss = loss_function(data_recon, mu_z, log_var_z, mu_recon, log_var_recon).cuda()
+                test_loss = loss_function(data_recon, mu_z, log_var_z, mu_recon, log_var_recon)  # .cuda()
                 # increment the average loss for each sample
                 test_loss += test_loss.item()
                 self.optimizer.step()
@@ -178,7 +177,7 @@ class VAE:
             optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
             self.epoch = checkpoint['epoch']
             self.loss = checkpoint['loss']
-            model.train()
+            model.eval()
         except:
             print('[ERROR] Something bad happened while restoring data set :( ... ')
             print('[ERROR] Data set HAS NOT been restored ! ')
@@ -189,7 +188,7 @@ class VAE:
         :return: new samples with same attributes as inputs
         """
         with torch.no_grad():
-            latent_sample = torch.randn(self.model.batch_size, self.model.latent_size).to(self.device).cuda()
+            latent_sample = torch.randn(self.model.batch_size, self.model.latent_size).to(self.device)  # .cuda()
             sample = self.model.decode(latent_sample)
             return sample
 
