@@ -1,0 +1,98 @@
+#N canvas 723 181 1141 757 10;
+#X obj 31 507 udpsend;
+#X obj 116 259 packOSC;
+#X msg 13 35 connect localhost 9001;
+#X msg 25 68 disconnect;
+#N canvas 67 83 450 250 (subpatch) 0;
+#X array point1 16 float 3;
+#A 0 0.7994 0.778014 0.745936 0.713857 0.681778 0.6497 0.610492 0.571285
+0.539206 0.507128 0.450099 0.421584 0.39307 0.336041 0.286141 0.200598
+;
+#X coords 0 0.999 16 0.001 200 140 1 0 0;
+#X restore 372 56 graph;
+#X msg 116 221 send /coord \$1 \$2 \$3 \$4 \$5 \$6 \$7 \$8 \$9 \$10
+\$11 \$12 \$13 \$14 \$15 \$16;
+#X obj 116 177 array get point1;
+#X obj 116 144 bng 15 250 50 0 empty empty empty 17 7 0 10 -262144
+-1 -1;
+#X obj 801 678 packOSC;
+#X msg 845 629 send /coord \$1;
+#X obj 1000 393 tgl 15 0 empty empty empty 17 7 0 10 -262144 -1 -1
+0 1;
+#X msg 1029 542 1;
+#X floatatom 1002 611 5 0 0 0 - - -, f 5;
+#X obj 1002 568 f;
+#X obj 1048 568 +;
+#X floatatom 957 507 5 0 999 0 - - -, f 5;
+#X obj 1002 485 bng 15 250 50 0 empty empty empty 17 7 0 10 -262144
+-1 -1;
+#X obj 1002 506 t b b;
+#X msg 929 539 set \$1;
+#X obj 280 443 packOSC;
+#X obj 788 244 snapshot~;
+#X obj 787 220 osc~ 0.01;
+#X floatatom 308 316 15 1 999 0 - - -, f 15;
+#X obj 313 347 * 0.001;
+#X floatatom 314 381 5 0 0 0 - - -, f 5;
+#X msg 283 405 send /coord \$1;
+#X obj 878 569 * 0.001;
+#X floatatom 879 603 5 0 0 0 - - -, f 5;
+#X msg 891 450 0;
+#X obj 984 435 metro 100;
+#X text 12 11 Connect or disconnect to port;
+#X text 113 113 Send a 16-dimensional point;
+#X text 243 286 Sends a float between 0.001 and 0.999;
+#X obj 743 230 bng 15 250 50 0 empty empty empty 17 7 0 10 -262144
+-1 -1;
+#X obj 790 288 + 1;
+#X obj 784 345 / 2;
+#X floatatom 789 387 5 0 0 0 - - -, f 5;
+#X msg 699 431 send /coord \$1;
+#X obj 482 500 packOSC;
+#X obj 749 122 tgl 15 0 empty empty empty 17 7 0 10 -262144 -1 -1 0
+1;
+#X obj 733 164 metro 100;
+#X text 678 73 Sends an oscillating number between 0 and 1 \, sampled
+in the speed of the metro object;
+#X text 369 5 Choose the point coordinates (x \, y)=value y in dimension
+x;
+#X text 908 353 Simple incrementing float number;
+#X connect 1 0 0 0;
+#X connect 2 0 0 0;
+#X connect 3 0 0 0;
+#X connect 5 0 1 0;
+#X connect 6 0 5 0;
+#X connect 7 0 6 0;
+#X connect 8 0 0 0;
+#X connect 9 0 8 0;
+#X connect 10 0 29 0;
+#X connect 11 0 14 1;
+#X connect 12 0 18 0;
+#X connect 12 0 26 0;
+#X connect 13 0 14 0;
+#X connect 13 0 12 0;
+#X connect 14 0 13 1;
+#X connect 15 0 13 0;
+#X connect 16 0 17 0;
+#X connect 17 0 13 0;
+#X connect 17 1 11 0;
+#X connect 18 0 15 0;
+#X connect 19 0 0 0;
+#X connect 20 0 34 0;
+#X connect 21 0 20 0;
+#X connect 22 0 23 0;
+#X connect 23 0 24 0;
+#X connect 24 0 25 0;
+#X connect 25 0 19 0;
+#X connect 26 0 27 0;
+#X connect 27 0 9 0;
+#X connect 28 0 15 0;
+#X connect 29 0 16 0;
+#X connect 33 0 20 0;
+#X connect 34 0 35 0;
+#X connect 35 0 36 0;
+#X connect 36 0 37 0;
+#X connect 37 0 38 0;
+#X connect 38 0 0 0;
+#X connect 39 0 40 0;
+#X connect 40 0 33 0;

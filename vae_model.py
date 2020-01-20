@@ -63,7 +63,7 @@ class VAE_Model(nn.Module):
             self.decoder.add_module("dec_conv_" + str(i),
                                     nn.ConvTranspose1d(c_in, c_out, kernel_size=kernel, stride=stride, padding=padding))
             self.decoder.add_module("dec_norm_" + str(i), nn.BatchNorm1d(c_out))
-            self.decoder.add_module("dec_relu_" + str(i), nn.ReLU())
+            # self.decoder.add_module("dec_relu_" + str(i), nn.ReLU()) Useless as it delete negative values
             l_out = (l_out - 1) * stride - 2 * padding + kernel
             print('l decode', l_out)
         self.decoder.add_module("dec_tanh", nn.Tanh())
@@ -82,7 +82,7 @@ class VAE_Model(nn.Module):
         :param data: inputs
         :return: encoded gaussian parameters
         """
-        x = self.encoder(data)  # .cuda()
+        x = self.encoder(data)
         x = x.view(self.batch_size, self.l_enc)  # .cuda()
         fc_x = F.relu(self.encoder_fc(x))  # .cuda()
 
@@ -115,6 +115,7 @@ class VAE_Model(nn.Module):
         z = (mu_z + eps * std)  # .cuda()
 
         return z
+
 
     def forward(self, data):
         """

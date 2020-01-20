@@ -1,7 +1,8 @@
 # -------------------------------------------------------------------------------
 # Title : comparision.py
 # Project : Granolar
-# Description : plot some grains and the reconstruction of those grains in order to check the training
+# Description : identical as vae_main.py adding plotting of some grains and
+# the .wav reconstruction of those grains in order to check the training
 # Author : Ninon Devis
 # -------------------------------------------------------------------------------
 
@@ -39,6 +40,7 @@ parser.add_argument('--log-interval', type=int, default=10, metavar='N',
 args = parser.parse_args()
 
 cuda = not args.no_cuda and torch.cuda.is_available()
+print("cuda available", torch.cuda.is_available())
 
 # main code
 if __name__ == "__main__":
@@ -47,7 +49,9 @@ if __name__ == "__main__":
 
     # Get the database for train and test
     train_loader, test_loader = loader.get_data_loaders(data_dir, batch_size=args.batch_size, sr=sample_rate)
-    vae = VAE(train_loader, test_loader, batch_size=args.batch_size, seed=args.seed, cuda=cuda)
+    vae = VAE(train_loader, test_loader, batch_size=args.batch_size, seed=args.seed, cuda=False)
+    state_dict = torch.load("./saved_model/data.pth")
+    vae.resume_training()
     losses = []
     datas = None
     recons = None
@@ -57,16 +61,16 @@ if __name__ == "__main__":
         loss, datas, recons = vae.train()
         losses.append(loss)
         test_loss = vae.test()
-        sample = vae.create_sample()
-        # plot the grains and reconstruction of the grains (a modifier)
+        # sample = vae.create_sample()
+        # plot the grains and reconstruction of the grains
         fig, (input_plot, reconstruction_plot) = plt.subplots(1, 2)
-        plt.suptitle('comparison')
+        plt.suptitle('Comparison')
         input_plot.plot(datas[1][0][0].detach().numpy())
         input_plot.set_title('Input')
         reconstruction_plot.plot(recons[1][0][0].detach().numpy())
         reconstruction_plot.set_title('Reconstruction')
         plt.show()
-        # sound reconstruction using librosa
+        # sound reconstruction
         for recon in recons:
             for i in range(recon.size()[0]):
                 new_rec = recon[i][0].detach().numpy()
@@ -76,6 +80,12 @@ if __name__ == "__main__":
                     concat = np.concatenate((concat, new_rec))
             print('concat', concat)
             librosa.output.write_wav('./results/reconstruction.wav', concat, sample_rate, norm=False)
+
+    # Saving data set
+    vae.save_training()
+
+    # Restoring data set // Uncomment if model trained
+    vae.resume_training()
 
     # Plot the loss evolution
     plt.plot(losses)

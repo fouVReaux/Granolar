@@ -10,12 +10,26 @@ See the requirements folder for the compulsory libraries
 pip3 install -r requirements.txt
 ```
 
-## Run it
+## To train the model, run
 
 ```bash
 python3 vae_main.py
 ```
 
+## To load the trained model and start the synth
+Run one of the following scripts:
+
+\- recover_model.py
+
+\- recover_model_batch.py
+
+You need to have pyo installed, and also wxpython to have the pyo gui. Just run:
+
+```bash
+pip3 install pyo
+pip3 install wxpython
+```
+The file simple_OSC_control.pd is a Pure Data patch for sending simple OSC messages to control the synth. To control recover_model.py you need to send one element tuples of floats in the range (0,1). To control recover_model_batch.py you need to send tuples of 16 floats in the range of (0,1).
 
 ## Content
 
@@ -38,4 +52,8 @@ this archive contains:
 \- vae_main.py: main project script
 
 \- vae_model.py: architecture of the model
+
+\- comparison.py: plot inputs and outputs, concatenate the output and convert it in .wav
+
+\- pyo_script_osc2.py: granular synthesis of the VAE decoder's output, controlled by OSC
 
