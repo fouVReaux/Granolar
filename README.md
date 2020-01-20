@@ -10,7 +10,9 @@ See the requirements folder for the compulsory libraries
 pip3 install -r requirements.txt
 ```
 
-## To train the model, run
+## To train the model
+
+Run
 
 ```bash
 python3 vae_main.py
