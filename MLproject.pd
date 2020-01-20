@@ -1,0 +1,66 @@
+#N canvas 67 260 1074 590 10;
+#X obj 31 507 udpsend;
+#X obj 157 335 packOSC;
+#X msg 18 110 connect localhost 9001;
+#X msg 66 160 disconnect;
+#N canvas 0 50 450 250 (subpatch) 0;
+#X array point1 16 float 3;
+#A 0 0.199996 0.171424 0.142852 0.107136 0.0714214 -8.82149e-06 -0.0857251
+-0.171441 -0.28573 -0.385732 -0.585737 -0.714311 -0.885743 -0.900029
+0.592857 0.228572;
+#X coords 0 1 16 -1 200 140 1;
+#X restore 814 46 graph;
+#N canvas 0 50 450 250 (subpatch) 0;
+#X array point2 16 float 3;
+#A 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0;
+#X coords 0 1 16 -1 200 140 1;
+#X restore 814 227 graph;
+#X msg 220 188 send /coord \$1 \$2 \$3 \$4 \$5 \$6 \$7 \$8 \$9 \$10
+\$11 \$12 \$13 \$14 \$15 \$16;
+#X obj 222 143 array get point1;
+#X obj 224 108 bng 15 250 50 0 empty empty empty 17 7 0 10 -262144
+-1 -1;
+#X obj 293 454 packOSC;
+#X msg 337 405 send /coord \$1;
+#X obj 666 28 tgl 15 0 empty empty empty 17 7 0 10 -262144 -1 -1 0
+1;
+#X msg 695 177 1;
+#X floatatom 668 246 5 0 0 0 - - -, f 5;
+#X obj 668 203 f;
+#X obj 714 203 +;
+#X floatatom 623 142 5 0 0 0 - - -, f 5;
+#X obj 668 120 bng 15 250 50 0 empty empty empty 17 7 0 10 -262144
+-1 -1;
+#X obj 668 141 t b b;
+#X msg 595 174 set \$1;
+#X obj 650 70 metro 5;
+#X obj 437 515 packOSC;
+#X msg 505 487 send /coord \$1;
+#X obj 667 451 snapshot~;
+#X obj 668 482 * 10000;
+#X floatatom 678 522 10 0 0 0 - - -, f 10;
+#X obj 668 414 osc~ 0.01;
+#X connect 1 0 0 0;
+#X connect 2 0 0 0;
+#X connect 3 0 0 0;
+#X connect 6 0 1 0;
+#X connect 7 0 6 0;
+#X connect 8 0 7 0;
+#X connect 9 0 0 0;
+#X connect 10 0 9 0;
+#X connect 11 0 20 0;
+#X connect 12 0 15 1;
+#X connect 13 0 19 0;
+#X connect 13 0 10 0;
+#X connect 14 0 15 0;
+#X connect 14 0 13 0;
+#X connect 15 0 14 1;
+#X connect 16 0 14 0;
+#X connect 17 0 18 0;
+#X connect 18 0 14 0;
+#X connect 18 1 12 0;
+#X connect 19 0 16 0;
+#X connect 20 0 17 0;
+#X connect 23 0 24 0;
+#X connect 24 0 25 0;
+#X connect 26 0 23 0;
