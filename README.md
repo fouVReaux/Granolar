@@ -20,6 +20,7 @@ python3 vae_main.py
 Run one of the following scripts:
 
 \- recover_model.py
+
 \- recover_model_batch.py
 
 You need to have pyo installed, and also wxpython to have the pyo gui. Just run:
