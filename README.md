@@ -39,3 +39,7 @@ this archive contains:
 
 \- vae_model.py: architecture of the model
 
+\- comparison.py: plot inputs and outputs, concatenate the output and convert it in .wav
+
+\- pyo_script_osc2.py: granular synthesis of the VAE decoder's output, controlled by OSC
+
