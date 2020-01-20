@@ -59,5 +59,7 @@ this archive contains:
 
 \- comparison.py: plot inputs and outputs, concatenate the output and convert it in .wav
 
-\- pyo_script_osc2.py: granular synthesis of the VAE decoder's output, controlled by OSC
+\- recover_model.py , recover_model_batch.py: granular synthesis of the VAE decoder's output, controlled by OSC
+
+\- simple_OSC_control.pd: Pure Data OSC controller for the synth
 
