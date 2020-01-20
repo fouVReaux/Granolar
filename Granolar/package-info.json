@@ -1,0 +1,44 @@
+{
+	"name" : "Granolar",
+	"displayname" : "",
+	"version" : "0.4.9",
+	"author" : "Cycling '74",
+	"authors" : [  ],
+	"description" : "Lightweight reference implementation of a package built using the Min-API.",
+	"tags" : [  ],
+	"website" : "http://www.github.com/Cycling74/Granolar",
+	"extends" : "",
+	"extensible" : 0,
+	"max_version_min" : "8.0",
+	"max_version_max" : "none",
+	"os" : 	{
+		"macintosh" : 		{
+			"min_version" : "none",
+			"platform" : [ "x64" ]
+		}
+,
+		"windows" : 		{
+			"min_version" : "none",
+			"platform" : [ "x64" ]
+		}
+
+	}
+,
+	"homepatcher" : "Min Object Development Kit.maxpat",
+	"package_extra" : 	{
+		"reverse_domain" : "com.cycling74",
+		"copyright" : "Copyright (c) 2018 Cycling '74"
+	}
+,
+	"filelist" : 	{
+		"externals" : [ "mc.min.info~.mxe64", "mc.min.info~.mxo", "min.beat.pattern.mxe64", "min.beat.pattern.mxo", "min.beat.random.mxe64", "min.beat.random.mxo", "min.buffer.index~.mxe64", "min.buffer.index~.mxo", "min.buffer.loop~.mxe64", "min.buffer.loop~.mxo", "min.convolve.mxe64", "min.convolve.mxo", "min.dict.join.mxe64", "min.dict.join.mxo", "min.edgelow~.mxe64", "min.edgelow~.mxo", "min.edge~.mxe64", "min.edge~.mxo", "min.environment.mxe64", "min.environment.mxo", "min.hello-world.mxe64", "min.hello-world.mxo", "min.jit.clamp.mxe64", "min.jit.clamp.mxo", "min.jit.stencil.mxe64", "min.jit.stencil.mxo", "min.list.process.mxe64", "min.list.process.mxo", "min.markdown.mxe64", "min.markdown.mxo", "min.meter~.mxe64", "min.meter~.mxo", "min.note.make.mxe64", "min.note.make.mxo", "min.phasor~.mxe64", "min.phasor~.mxo", "min.pi.mxe64", "min.pi.mxo", "min.prefs.mxe64", "min.prefs.mxo", "min.project.mxe64", "min.project.mxo", "min.sift~.mxe64", "min.sift~.mxo", "min.stress~.mxe64", "min.stress~.mxo", "min.textslider.mxe64", "min.textslider.mxo", "min.threadcheck.mxe64", "min.threadcheck.mxo" ],
+		"help" : [ "mc.min.info~.maxhelp", "min.beat.pattern.maxhelp", "min.beat.random.maxhelp", "min.buffer.index~.maxhelp", "min.buffer.loop~.maxhelp", "min.convolve.maxhelp", "min.dict.join.maxhelp", "min.edgelow~.maxhelp", "min.edge~.maxhelp", "min.edit-button.png", "min.environment.maxhelp", "min.hello-world.maxhelp", "min.jit.clamp.maxhelp", "min.jit.stencil.maxhelp", "min.list.process.maxhelp", "min.markdown.maxhelp", "min.meter~.maxhelp", "min.note.make.maxhelp", "min.phasor~.maxhelp", "min.pi.maxhelp", "min.prefs.maxhelp", "min.sifthelp.aiff", "min.sift~.maxhelp", "min.stress~.maxhelp", "min.textslider.maxhelp", "min.threadcheck.maxhelp" ],
+		"misc" : [ "icon.psd", "launcher-arrows.graffle" ],
+		"docs" : [ "mc.min.info~.maxref.xml", "min.beat.pattern.maxref.xml", "min.beat.random.maxref.xml", "min.buffer.index~.maxref.xml", "min.buffer.loop~.maxref.xml", "min.convolve.maxref.xml", "min.dict.join.maxref.xml", "min.edgelow~.maxref.xml", "min.edge~.maxref.xml", "min.environment.maxref.xml", "min.hello-world.maxref.xml", "min.jit.clamp.maxref.xml", "min.jit.stencil.maxref.xml", "min.list.process.maxref.xml", "min.markdown.maxref.xml", "min.meter~.maxref.xml", "min.note.make.maxref.xml", "min.phasor~.maxref.xml", "min.pi.maxref.xml", "min.prefs.maxref.xml", "min.project.maxref.xml", "min.sift~.maxref.xml", "min.stress~.maxref.xml", "min.textslider.maxref.xml", "min.threadcheck.maxref.xml" ],
+		"javascript" : [ "min-package-list.js" ],
+		"extras" : [ "Min Object Development Kit.maxpat" ]
+	}
+,
+	"c74install" : 1,
+	"installdate" : 3662374480
+}
