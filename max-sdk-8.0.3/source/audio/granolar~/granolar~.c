@@ -107,7 +107,7 @@ void *granolar_new(t_symbol *s, long argc, t_atom *argv)
 	if (x) {
 		dsp_setup((t_pxobject *)x, 3);				// 2 inlets (freq, start,recording)
 		outlet_new((t_object *)x, "signal");	
-		/*float buf = 0;
+		float buf = 0;
 		atom_arg_getfloat(&buf, 0, argc, argv);	// get typed in args
 		x->freq = (double) buf;
 
@@ -134,7 +134,7 @@ void *granolar_new(t_symbol *s, long argc, t_atom *argv)
 		x->start_connected = false;
 		x->freq_connected = false;
 		x->current_step = 1.;
-		x->previous_y = 0.;*/
+		x->previous_y = 0.;
 	}
 	return x;
 }
@@ -144,7 +144,7 @@ void *granolar_new(t_symbol *s, long argc, t_atom *argv)
 
 void granolar_assist(t_granolar *x, void *b, long msg, long arg, char *dst)
 {
-	/*
+	
 	if (msg == ASSIST_INLET) {
 		switch (arg) {
 		case 0: strcpy(dst, "(signal/float) frequency of the output"); break;
@@ -157,13 +157,13 @@ void granolar_assist(t_granolar *x, void *b, long msg, long arg, char *dst)
 		case 0: strcpy(dst, "(signal) Output"); break;
 
 		}
-	}*/
+	}
 }
 
 
 void granolar_float(t_granolar *x, double value)
 {
-	/*long inlet_number = proxy_getinlet((t_object *)x);
+	long inlet_number = proxy_getinlet((t_object *)x);
 
 	if (inlet_number == 0) {
 		//x->current_length =  (int)round((double)x->current_length * x->freq / value);
@@ -177,13 +177,13 @@ void granolar_float(t_granolar *x, double value)
 	}
 	else
 		object_error((t_object *)x, "oops -- maybe you sent a number to the wrong inlet?");
-	*/
+	
 }
 
 
 void granolar_int(t_granolar *x, long value)
 {
-	/*long inlet_number = proxy_getinlet((t_object*)x);
+	long inlet_number = proxy_getinlet((t_object*)x);
 
 	if (inlet_number == 0) {
 		granolar_float(x, (double)value);
@@ -194,7 +194,7 @@ void granolar_int(t_granolar *x, long value)
 	}
 	else
 		object_error((t_object*)x, "oops -- maybe you sent a number to the wrong inlet?");
-		*/
+		
 }
 
 void granolar_bang(t_granolar* x) {
@@ -205,7 +205,7 @@ void granolar_bang(t_granolar* x) {
 
 
 
-/*void granolar_update_time_freq(t_granolar* x, double freq, int start) {
+void granolar_update_time_freq(t_granolar* x, double freq, int start) {
 
 	//x->current_length = (int)round((double)x->current_length * x->freq / freq);
 	if (x->start_connected && start < x->grain_length && start >= 0) {
@@ -220,7 +220,7 @@ void granolar_bang(t_granolar* x) {
 		x->alpha = buf / (buf + 1);
 	}
 
-}*/
+}
 
 
 void granolar_perform64(t_granolar *x, t_object *dsp64, double **ins, long numins, double **outs, long numouts, long sampleframes, long flags, void *userparam)
@@ -233,7 +233,7 @@ void granolar_perform64(t_granolar *x, t_object *dsp64, double **ins, long numin
 	int			n = sampleframes;
 
 	
-	/*while (n--) {
+	while (n--) {
 
 		granolar_update_time_freq(x, *freq++, (int)*start++);
 		if (x->current_start > (double)x->grain_length)
@@ -259,7 +259,7 @@ void granolar_perform64(t_granolar *x, t_object *dsp64, double **ins, long numin
 		}
 
 		
-	}*/
+	}
 }
 
 
@@ -268,7 +268,7 @@ void granolar_perform64(t_granolar *x, t_object *dsp64, double **ins, long numin
 
 void granolar_dsp64(t_granolar *x, t_object *dsp64, short *count, double samplerate, long maxvectorsize, long flags)
 {
-	/*x->freq_connected = count[0];
+	x->freq_connected = count[0];
 	x->start_connected = count[1];
 	if (!x->sr_set) {
 		x->sr = samplerate;
@@ -279,7 +279,7 @@ void granolar_dsp64(t_granolar *x, t_object *dsp64, short *count, double sampler
 		double buf = x->cutoff / x->current_step;
 		x->alpha = buf / (buf + 1);
 
-	}*/
+	}
 	object_method(dsp64, gensym("dsp_add64"), x, granolar_perform64, 0, NULL);
 }
 
