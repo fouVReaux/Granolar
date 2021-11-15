@@ -10,7 +10,7 @@ llvmlite==0.30.0
 matplotlib==3.1.2
 numba==0.46.0
 numpy==1.17.4
-pip==19.2.3
+pip==21.1
 pycparser==2.19
 pyparsing==2.4.5
 python-dateutil==2.8.1
